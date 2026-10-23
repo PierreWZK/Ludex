@@ -43,20 +43,20 @@ final class SteamTest extends LudexTestCase
     public function testLinkingProvesTheSteamAccount(): void
     {
         $bob = $this->bob();
-        $link = $bob->request('POST', '/api/steam/link')->toArray()['linkUrl'];
+        $link = $bob->request('POST', '/api/account/steam/link')->toArray()['linkUrl'];
         self::assertStringStartsWith('https://steamcommunity.com/openid/login?', $link);
 
         $this->steamReturns($link, FakeSteam::PUBLIC);
         self::assertResponseIsSuccessful();
         self::assertStringContainsString('Compte Steam lié', self::getClient()->getResponse()->getContent());
 
-        $account = $bob->request('GET', '/api/steam')->toArray();
+        $account = $bob->request('GET', '/api/account/steam')->toArray();
         self::assertSame([true, FakeSteam::PUBLIC, 'Joueur 1'], [$account['linked'], $account['steamId'], $account['persona']]);
     }
 
     public function testATamperedStateIsRefused(): void
     {
-        $link = $this->bob()->request('POST', '/api/steam/link')->toArray()['linkUrl'];
+        $link = $this->bob()->request('POST', '/api/account/steam/link')->toArray()['linkUrl'];
         $this->steamReturns($link, FakeSteam::PUBLIC, '1.9999999999.'.str_repeat('0', 64));
 
         self::assertResponseStatusCodeSame(400);
@@ -65,7 +65,8 @@ final class SteamTest extends LudexTestCase
     public function testASteamAccountLinksToOnlyOneLudexAccount(): void
     {
         $this->linkSteam('bob@ludex.fr', FakeSteam::PUBLIC);
-        $link = $this->demo()->request('POST', '/api/steam/link')->toArray()['linkUrl'];
+        self::createClient()->request('POST', '/api/account', ['json' => ['email' => 'carla@ludex.fr', 'plainPassword' => 'carla-password']]);
+        $link = $this->as('carla@ludex.fr', 'carla-password')->request('POST', '/api/account/steam/link')->toArray()['linkUrl'];
         $this->steamReturns($link, FakeSteam::PUBLIC);
 
         self::assertResponseStatusCodeSame(409);
@@ -76,7 +77,7 @@ final class SteamTest extends LudexTestCase
         $this->linkSteam('bob@ludex.fr', FakeSteam::PUBLIC);
         $bob = $this->bob();
 
-        $bob->request('POST', '/api/steam/sync');
+        $bob->request('POST', '/api/account/steam/sync');
         self::assertResponseStatusCodeSame(202);
         self::assertJsonContains(['syncStatus' => 'ok']);
 
@@ -99,10 +100,10 @@ final class SteamTest extends LudexTestCase
         self::assertSame(['Hades'], array_column(array_column($platinums, 'game'), 'title'));
         self::assertStringStartsWith('2024-10-27', $platinums[0]['platinumAt']);
 
-        $bob->request('GET', '/api/stats');
+        $bob->request('GET', '/api/account/stats');
         self::assertJsonContains(['achievements' => 4, 'platinums' => 1, 'games' => 3]);
 
-        $rewards = array_column($bob->request('GET', '/api/rewards')->toArray()['member'], 'unlocked', 'code');
+        $rewards = array_column($bob->request('GET', '/api/account/rewards')->toArray()['member'], 'unlocked', 'code');
         self::assertTrue($rewards['premier-succes']);
         self::assertTrue($rewards['platine']);
         self::assertTrue($rewards['rarissime'], 'Chaleur extrême : 0,8 % des joueurs');
@@ -113,8 +114,8 @@ final class SteamTest extends LudexTestCase
     {
         $this->linkSteam('bob@ludex.fr', FakeSteam::PUBLIC);
         $bob = $this->bob();
-        $bob->request('POST', '/api/steam/sync');
-        $bob->request('POST', '/api/steam/sync');
+        $bob->request('POST', '/api/account/steam/sync');
+        $bob->request('POST', '/api/account/steam/sync');
 
         self::assertResponseStatusCodeSame(429);
     }
@@ -122,7 +123,7 @@ final class SteamTest extends LudexTestCase
     public function testAPrivateProfileExplainsWhatToChange(): void
     {
         $this->linkSteam('bob@ludex.fr', FakeSteam::PRIVATE_PROFILE);
-        $response = $this->bob()->request('POST', '/api/steam/sync');
+        $response = $this->bob()->request('POST', '/api/account/steam/sync');
 
         self::assertJsonContains(['syncStatus' => 'profil_prive']);
         self::assertStringContainsString('Public', $response->toArray()['message']);
@@ -131,7 +132,7 @@ final class SteamTest extends LudexTestCase
     public function testHiddenGameDetailsExplainWhatToChange(): void
     {
         $this->linkSteam('bob@ludex.fr', FakeSteam::PRIVATE_GAMES);
-        $this->bob()->request('POST', '/api/steam/sync');
+        $this->bob()->request('POST', '/api/account/steam/sync');
 
         self::assertJsonContains(['syncStatus' => 'details_prives']);
         self::assertSame(0, $this->em->getRepository(CollectionItem::class)->count([]) - 18, 'rien d\'importé');
@@ -140,7 +141,7 @@ final class SteamTest extends LudexTestCase
     public function testAnotherPlayerCannotReadTheAchievements(): void
     {
         $this->linkSteam('bob@ludex.fr', FakeSteam::PUBLIC);
-        $this->bob()->request('POST', '/api/steam/sync');
+        $this->bob()->request('POST', '/api/account/steam/sync');
         $bob = $this->em->getRepository(User::class)->findOneBy(['email' => 'bob@ludex.fr']);
         $item = self::findIriBy(CollectionItem::class, ['owner' => $bob]);
 
@@ -151,7 +152,7 @@ final class SteamTest extends LudexTestCase
 
     public function testSyncNeedsALinkedAccount(): void
     {
-        $this->bob()->request('POST', '/api/steam/sync');
+        $this->bob()->request('POST', '/api/account/steam/sync');
 
         self::assertResponseStatusCodeSame(409);
     }

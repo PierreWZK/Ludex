@@ -18,7 +18,7 @@ use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\RateLimiter\RateLimiterFactoryInterface;
 
 /**
- * POST /api/steam/sync : met la synchronisation en file d'attente, une fois par heure au plus.
+ * POST /api/account/steam/sync : met la synchronisation en file d'attente, une fois par heure au plus.
  *
  * @implements ProcessorInterface<null, SteamAccount>
  */
@@ -39,7 +39,7 @@ final readonly class SteamSyncProcessor implements ProcessorInterface
         \assert($user instanceof User);
 
         if (!$user->getSteamId()) {
-            throw new ConflictHttpException("Aucun compte Steam lié : commencez par POST /api/steam/link.");
+            throw new ConflictHttpException("Aucun compte Steam lié : commencez par POST /api/account/steam/link.");
         }
         if (!$this->steam->isConfigured()) {
             throw new SteamNotConfigured();

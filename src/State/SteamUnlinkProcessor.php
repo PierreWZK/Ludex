@@ -9,7 +9,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\SecurityBundle\Security;
 
 /**
- * DELETE /api/steam : délie le compte. La collection importée et les succès restent.
+ * DELETE /api/account/steam : délie le compte. La collection importée et les succès restent.
  *
  * @implements ProcessorInterface<mixed, null>
  */

@@ -1,0 +1,155 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Jeu du jour · Ludex{% endblock %}
+{% block description %}Retrouvez le jeu mystère du jour en 6 essais : chaque proposition compare l'année, les genres et les plateformes. Le même pour tout le monde, nouveau à minuit.{% endblock %}
+{% block meta %}<link rel="canonical" href="https://ludex.projectp.fr/jeu">
+    <meta property="og:url" content="https://ludex.projectp.fr/jeu">{% endblock %}
+
+{% block body %}
+    <header class="tete">
+        <h1>Le jeu mystère</h1>
+        <p>Retrouvez le jeu du jour en 6 essais. Chaque proposition dit si le jeu mystère est sorti avant ou après, et quels genres et plateformes il partage. Le même pour tout le monde, nouveau à minuit.</p>
+    </header>
+
+    <main class="jeu">
+        <div class="jeu-tete"><span id="numero">Jeu du jour</span><span id="essais-restants"></span></div>
+
+        <form class="proposition" id="proposition" autocomplete="off">
+            <input class="saisie" type="search" name="titre" list="choix" placeholder="Proposer un jeu…" aria-label="Proposer un jeu" required>
+            <datalist id="choix"></datalist>
+            <button class="bouton bouton-plein" type="submit">Proposer</button>
+        </form>
+        <p class="message message-erreur" id="erreur" role="alert"></p>
+        <p class="indice" id="indice" hidden></p>
+
+        <section class="fin" id="fin" hidden aria-live="polite"></section>
+        <div id="essais" style="display: grid; gap: 10px" aria-live="polite"></div>
+
+        <p class="regle">
+            <span class="case oui">vert</span> identique ·
+            <span class="case proche">orange</span> à 3 ans près ·
+            <span class="case">gris</span> différent. Un indice s'ajoute après le troisième essai.
+            Le jeu se joue aussi par l'API : <code>GET /api/daily</code>, puis <code>POST /api/daily/guess</code>.
+        </p>
+    </main>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const { api, echappe, partager } = Ludex;
+    const CLE = 'ludex:jeu';
+    let partie = null;   // { date, essais: [résultats], fini, gagne }
+    let jeu = null;      // GET /api/daily
+
+    const lire = () => { try { return JSON.parse(localStorage.getItem(CLE)) ?? {}; } catch { return {}; } };
+    const garder = (etat) => { try { localStorage.setItem(CLE, JSON.stringify(etat)); } catch { /* partie non gardée */ } };
+
+    // Une case pour chaque indice d'un essai : vert, orange ou gris
+    const caseAnnee = (r) => (r.year === 'egal' ? 'oui' : r.yearGap <= 3 ? 'proche' : '');
+    const caseListe = (liste) => (liste.length && liste.every((x) => x.match) ? 'oui' : liste.some((x) => x.match) ? 'proche' : '');
+    const emoji = (classe) => ({ oui: '🟩', proche: '🟨', '': '⬛' })[classe];
+
+    function afficher() {
+        document.getElementById('numero').textContent = `Jeu du jour n° ${jeu.number}`;
+        document.getElementById('essais-restants').textContent = partie.fini ? '' : `${jeu.maxAttempts - partie.essais.length} essai${jeu.maxAttempts - partie.essais.length > 1 ? 's' : ''} restant${jeu.maxAttempts - partie.essais.length > 1 ? 's' : ''}`;
+        document.getElementById('proposition').hidden = partie.fini;
+
+        document.getElementById('essais').innerHTML = [...partie.essais].reverse().map((r) => `
+            <article class="essai${r.correct ? ' gagne' : ''}">
+                <div class="essai-tete"><strong>${echappe(r.title)}</strong><span>essai ${r.attempt}</span></div>
+                <dl class="indices">
+                    <dt>Sortie</dt>
+                    <dd><span class="case ${caseAnnee(r)}">${r.releaseYear}${r.year === 'egal' ? ' ✓' : r.year === 'plus_recent' ? ' · plus récent ↑' : ' · plus ancien ↓'}</span></dd>
+                    <dt>Genres</dt>
+                    <dd>${r.genres.map((g) => `<span class="case ${g.match ? 'oui' : ''}">${echappe(g.name)}</span>`).join('')}</dd>
+                    <dt>Plateformes</dt>
+                    <dd>${r.platforms.map((p) => `<span class="case ${p.match ? 'oui' : ''}">${echappe(p.name)}</span>`).join('')}</dd>
+                </dl>
+            </article>`).join('');
+
+        const dernier = partie.essais.at(-1);
+        const indice = document.getElementById('indice');
+        indice.hidden = !dernier?.hint;
+        indice.textContent = dernier?.hint ? `Indice : ${dernier.hint}` : '';
+
+        const fin = document.getElementById('fin');
+        fin.hidden = !partie.fini;
+        if (!partie.fini) return;
+        const reponse = partie.essais.at(-1).answer;
+        const stats = lire().stats ?? {};
+        fin.innerHTML = `
+            <h2>${partie.gagne ? `Trouvé en ${partie.essais.length} essai${partie.essais.length > 1 ? 's' : ''} !` : 'Perdu pour aujourd\'hui'}</h2>
+            <p>C'était <strong>${echappe(reponse.title)}</strong> (${reponse.releaseYear}).</p>
+            ${reponse.coverUrl ? `<img src="${echappe(reponse.coverUrl)}" alt="">` : ''}
+            <pre aria-label="Résumé de la partie">${grille()}</pre>
+            <dl class="serie">
+                <div><dt>Parties</dt><dd>${stats.jouees ?? 0}</dd></div>
+                <div><dt>Gagnées</dt><dd>${stats.jouees ? Math.round(100 * (stats.gagnees ?? 0) / stats.jouees) : 0} %</dd></div>
+                <div><dt>Série</dt><dd>${stats.serie ?? 0}</dd></div>
+                <div><dt>Record</dt><dd>${stats.record ?? 0}</dd></div>
+            </dl>
+            <button class="bouton bouton-vert" id="partager" type="button">Partager mon résultat</button>
+            <p class="message" id="partage" role="status"></p>
+            <p class="regle">Nouveau jeu mystère à minuit.</p>`;
+        document.getElementById('partager').addEventListener('click', async () => {
+            const texte = `Ludex · jeu du jour n° ${jeu.number} · ${partie.gagne ? partie.essais.length : 'X'}/${jeu.maxAttempts}\n${grille()}\n${location.origin}/jeu`;
+            const r = await partager(texte);
+            const zone = document.getElementById('partage');
+            zone.className = `message message-${r === 'echec' ? 'erreur' : 'ok'}`;
+            zone.textContent = { copie: 'Résultat copié : collez-le où vous voulez.', partage: 'Partagé.', echec: 'Copie impossible sur ce navigateur.' }[r];
+        });
+    }
+
+    /** Une ligne par essai : année, genres, plateformes ; sans dévoiler les titres */
+    const grille = () => partie.essais.map((r) => r.correct ? '🟩🟩🟩 🎮' : `${emoji(caseAnnee(r))}${emoji(caseListe(r.genres))}${emoji(caseListe(r.platforms))}`).join('\n');
+
+    function terminer(gagne) {
+        partie.fini = true;
+        partie.gagne = gagne;
+        const etat = lire();
+        const s = etat.stats ?? { jouees: 0, gagnees: 0, serie: 0, record: 0, dernier: null };
+        // La série continue si la partie gagnée d'hier l'était aussi
+        const hier = new Date(`${jeu.date}T12:00:00Z`);
+        hier.setUTCDate(hier.getUTCDate() - 1);
+        s.jouees += 1;
+        if (gagne) {
+            s.gagnees += 1;
+            s.serie = s.dernier === hier.toISOString().slice(0, 10) ? s.serie + 1 : 1;
+            s.dernier = jeu.date;
+            s.record = Math.max(s.record, s.serie);
+        } else {
+            s.serie = 0;
+        }
+        garder({ ...etat, partie, stats: s });
+    }
+
+    document.getElementById('proposition').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const champ = e.target.elements.titre;
+        const erreur = document.getElementById('erreur');
+        const choisi = jeu.choices.find((c) => c.title.toLowerCase() === champ.value.trim().toLowerCase());
+        erreur.textContent = '';
+        if (!choisi) { erreur.textContent = 'Choisissez un jeu de la liste proposée.'; return; }
+        if (partie.essais.some((r) => r.title === choisi.title)) { erreur.textContent = 'Déjà proposé.'; return; }
+
+        try {
+            const r = await api('/api/daily/guess', { methode: 'POST', corps: { game: choisi.id, attempt: partie.essais.length + 1 }, jeton: false });
+            partie.essais.push(r);
+            champ.value = '';
+            if (r.correct || r.answer) terminer(r.correct);
+            else garder({ ...lire(), partie });
+            afficher();
+        } catch (err) {
+            erreur.textContent = Ludex.messageErreur(err);
+        }
+    });
+
+    (async () => {
+        jeu = await api('/api/daily', { jeton: false });
+        document.getElementById('choix').innerHTML = jeu.choices.map((c) => `<option value="${echappe(c.title)}">`).join('');
+        const sauvee = lire().partie;
+        partie = sauvee?.date === jeu.date ? sauvee : { date: jeu.date, essais: [], fini: false, gagne: false };
+        afficher();
+    })();
+</script>
+{% endblock %}

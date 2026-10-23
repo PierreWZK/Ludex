@@ -127,7 +127,7 @@ final class ApiTest extends LudexTestCase
 
     public function testStats(): void
     {
-        $this->demo()->request('GET', '/api/stats');
+        $this->demo()->request('GET', '/api/account/stats');
 
         self::assertResponseIsSuccessful();
         self::assertJsonContains([
@@ -142,12 +142,12 @@ final class ApiTest extends LudexTestCase
     public function testRegistrationThenLogin(): void
     {
         $client = self::createClient();
-        $client->request('POST', '/api/register', ['json' => ['email' => 'Alice@Ludex.fr', 'plainPassword' => 'un-mot-de-passe']]);
+        $client->request('POST', '/api/account', ['json' => ['email' => 'Alice@Ludex.fr', 'plainPassword' => 'un-mot-de-passe']]);
         self::assertResponseStatusCodeSame(201);
         self::assertJsonContains(['email' => 'alice@ludex.fr']);
         self::assertArrayNotHasKey('password', $client->getResponse()->toArray());
 
-        $this->as('alice@ludex.fr', 'un-mot-de-passe')->request('GET', '/api/me');
+        $this->as('alice@ludex.fr', 'un-mot-de-passe')->request('GET', '/api/account');
         self::assertJsonContains(['email' => 'alice@ludex.fr']);
     }
 

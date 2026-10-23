@@ -6,9 +6,9 @@ use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\Get;
 use App\State\StatsProvider;
 
-/** GET /api/stats : les chiffres de la collection du joueur connecté */
+/** GET /api/account/stats : les chiffres de la collection du joueur connecté */
 #[ApiResource(
-    operations: [new Get(uriTemplate: '/stats', provider: StatsProvider::class, description: 'Nombre de jeux, temps total, répartition par plateforme et par statut')],
+    operations: [new Get(uriTemplate: '/account/stats', provider: StatsProvider::class, description: 'Nombre de jeux, temps total, répartition par plateforme et par statut')],
     security: "is_granted('ROLE_USER')",
 )]
 final class Stats

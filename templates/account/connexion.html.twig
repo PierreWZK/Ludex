@@ -1,0 +1,86 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Connexion · Ludex{% endblock %}
+
+{% block body %}
+    <header class="tete">
+        <h1>Votre compte Ludex</h1>
+        <p>Le même compte sert sur le site et dans l'API : ce que vous faites ici passe par <code>/api/account</code> et <code>/api/auth</code>.</p>
+    </header>
+
+    <main class="connexion">
+        <p class="message message-info" id="expire" hidden>Votre session a expiré : reconnectez-vous.</p>
+
+        <section class="panneau" aria-labelledby="titre-connexion">
+            <h2 id="titre-connexion">Se connecter</h2>
+            <p>Avec l'e-mail et le mot de passe de votre compte.</p>
+            <form class="formulaire" id="form-connexion">
+                <label>E-mail <input type="email" name="email" autocomplete="email" required></label>
+                <label>Mot de passe <input type="password" name="password" autocomplete="current-password" required></label>
+                <p class="message message-erreur" role="alert"></p>
+                <button class="bouton bouton-plein" type="submit">Se connecter</button>
+            </form>
+        </section>
+
+        <section class="panneau" aria-labelledby="titre-inscription">
+            <h2 id="titre-inscription">Créer un compte</h2>
+            <p>Gratuit, sans publicité. Votre e-mail ne sert qu'à vous connecter et n'est jamais montré.</p>
+            <form class="formulaire" id="form-inscription">
+                <label>Pseudo <input type="text" name="displayName" autocomplete="nickname" minlength="2" maxlength="40" required></label>
+                <label>E-mail <input type="email" name="email" autocomplete="email" required></label>
+                <label>Mot de passe <input type="password" name="plainPassword" autocomplete="new-password" minlength="8" required><small>8 caractères au moins.</small></label>
+                <p class="message message-erreur" role="alert"></p>
+                <button class="bouton bouton-vert" type="submit">Créer mon compte</button>
+            </form>
+        </section>
+
+        <section class="panneau demo-encart" aria-labelledby="titre-demo">
+            <div>
+                <h2 id="titre-demo">Juste pour essayer ?</h2>
+                <p>Entrez dans le compte de démo, partagé par tous les visiteurs : sa collection se modifie librement et revient à son état d'origine chaque nuit à minuit.</p>
+            </div>
+            <button class="bouton" type="button" id="demo">Essayer le compte de démo</button>
+        </section>
+    </main>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    (async () => {
+        if (new URLSearchParams(location.search).has('expire')) document.getElementById('expire').hidden = false;
+        // Déjà connecté : direction le compte
+        if (await Ludex.moi()) location.replace('/compte');
+    })();
+
+    async function entrer(email, motDePasse, alerte) {
+        try {
+            await Ludex.connexion(email, motDePasse);
+            location.href = '/compte';
+        } catch (e) {
+            alerte.textContent = e.statut === 401 ? 'E-mail ou mot de passe incorrect.' : Ludex.messageErreur(e);
+        }
+    }
+
+    document.getElementById('form-connexion').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const f = new FormData(e.target);
+        entrer(f.get('email'), f.get('password'), e.target.querySelector('.message'));
+    });
+
+    document.getElementById('form-inscription').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const f = new FormData(e.target);
+        const alerte = e.target.querySelector('.message');
+        alerte.textContent = '';
+        try {
+            await Ludex.api('/api/account', { methode: 'POST', corps: Object.fromEntries(f), jeton: false });
+            await entrer(f.get('email'), f.get('plainPassword'), alerte);
+        } catch (err) {
+            alerte.textContent = Ludex.messageErreur(err);
+        }
+    });
+
+    document.getElementById('demo').addEventListener('click', () =>
+        entrer({{ constant('App\\Demo\\DemoAccount::EMAIL')|json_encode|raw }}, {{ constant('App\\Demo\\DemoAccount::PASSWORD')|json_encode|raw }}, document.querySelector('#form-connexion .message')));
+</script>
+{% endblock %}

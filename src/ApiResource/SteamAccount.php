@@ -15,12 +15,12 @@ use App\State\SteamUnlinkProcessor;
 #[ApiResource(
     shortName: 'Steam',
     operations: [
-        new Get(uriTemplate: '/steam', provider: SteamAccountProvider::class, description: 'État de la liaison et de la dernière synchronisation'),
-        new Post(uriTemplate: '/steam/link', input: false, status: 200, processor: SteamLinkProcessor::class,
+        new Get(uriTemplate: '/account/steam', provider: SteamAccountProvider::class, description: 'État de la liaison et de la dernière synchronisation'),
+        new Post(uriTemplate: '/account/steam/link', input: false, status: 200, processor: SteamLinkProcessor::class,
             description: "Renvoie l'adresse « Se connecter via Steam » : ouvrez-la dans un navigateur, Steam vous renvoie sur Ludex une fois le compte prouvé"),
-        new Post(uriTemplate: '/steam/sync', input: false, status: 202, processor: SteamSyncProcessor::class,
+        new Post(uriTemplate: '/account/steam/sync', input: false, status: 202, processor: SteamSyncProcessor::class,
             description: 'Lance la synchronisation en tâche de fond (une fois par heure au plus)'),
-        new Delete(uriTemplate: '/steam', provider: SteamAccountProvider::class, processor: SteamUnlinkProcessor::class,
+        new Delete(uriTemplate: '/account/steam', provider: SteamAccountProvider::class, processor: SteamUnlinkProcessor::class,
             description: 'Délie le compte Steam ; les jeux importés restent dans la collection'),
     ],
     security: "is_granted('ROLE_USER')",
@@ -37,7 +37,7 @@ final class SteamAccount
         public ?string $syncStatus = null,
         /** Ce qu'il faut faire, en clair, quand la synchronisation n'a pas abouti */
         public ?string $message = null,
-        /** Seulement après POST /api/steam/link */
+        /** Seulement après POST /api/account/steam/link */
         public ?string $linkUrl = null,
     ) {
     }

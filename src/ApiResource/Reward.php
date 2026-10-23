@@ -8,7 +8,7 @@ use App\State\RewardProvider;
 
 /** Les récompenses : toutes, avec celles du joueur connecté débloquées et sa progression vers les autres */
 #[ApiResource(
-    operations: [new GetCollection(uriTemplate: '/rewards', paginationEnabled: false, provider: RewardProvider::class)],
+    operations: [new GetCollection(uriTemplate: '/account/rewards', paginationEnabled: false, provider: RewardProvider::class)],
     security: "is_granted('ROLE_USER')",
 )]
 final class Reward
