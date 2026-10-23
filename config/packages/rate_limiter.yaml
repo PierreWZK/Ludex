@@ -5,11 +5,9 @@ framework:
             policy: sliding_window
             limit: 5
             interval: '1 hour'
+        # Synchronisation Steam : une par heure et par joueur (un appel Steam par jeu joué)
+        steam_sync:
+            policy: fixed_window
+            limit: 1
+            interval: '1 hour'
 
-# Tests : compteurs en mémoire, remis à zéro à chaque exécution
-when@test:
-    framework:
-        cache:
-            pools:
-                cache.rate_limiter:
-                    adapter: cache.adapter.array

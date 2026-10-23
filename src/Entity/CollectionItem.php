@@ -3,6 +3,7 @@
 namespace App\Entity;
 
 use ApiPlatform\Doctrine\Orm\Filter\ExactFilter;
+use ApiPlatform\Doctrine\Orm\Filter\ExistsFilter;
 use ApiPlatform\Doctrine\Orm\Filter\PartialSearchFilter;
 use ApiPlatform\Doctrine\Orm\Filter\SortFilter;
 use ApiPlatform\Metadata\ApiResource;
@@ -31,7 +32,8 @@ use Symfony\Component\Validator\Context\ExecutionContextInterface;
             'platform' => new QueryParameter(filter: new ExactFilter(), property: 'platform.slug', description: 'Slug de plateforme (ps5, switch…)'),
             'genre' => new QueryParameter(filter: new ExactFilter(), property: 'game.genres.slug', description: 'Slug de genre (rpg, aventure…)'),
             'title' => new QueryParameter(filter: new PartialSearchFilter(), property: 'game.title', description: 'Une partie du titre'),
-            'order[:property]' => new QueryParameter(filter: new SortFilter(), properties: ['addedAt', 'playtimeMinutes', 'rating']),
+            'exists[:property]' => new QueryParameter(filter: new ExistsFilter(), properties: ['platinumAt'], description: 'exists[platinumAt]=true : les platines'),
+            'order[:property]' => new QueryParameter(filter: new SortFilter(), properties: ['addedAt', 'playtimeMinutes', 'rating', 'platinumAt']),
         ]),
         new Get(security: "is_granted('OWNER', object)"),
         new Post(processor: OwnerProcessor::class),
@@ -89,6 +91,24 @@ class CollectionItem implements OwnedInterface
     #[Groups(['item:read', 'item:write'])]
     private ?\DateTimeImmutable $finishedAt = null;
 
+    /** Importé depuis Steam : le temps de jeu et les succès viennent de la synchronisation */
+    #[ORM\Column(options: ['default' => false])]
+    #[Groups(['item:read'])]
+    private bool $fromSteam = false;
+
+    #[ORM\Column(options: ['default' => 0])]
+    #[Groups(['item:read'])]
+    private int $achievementsUnlocked = 0;
+
+    #[ORM\Column(options: ['default' => 0])]
+    #[Groups(['item:read'])]
+    private int $achievementsTotal = 0;
+
+    /** Date de la platine (100 % des succès), gardée même si le jeu ajoute des succès ensuite */
+    #[ORM\Column(nullable: true)]
+    #[Groups(['item:read'])]
+    private ?\DateTimeImmutable $platinumAt = null;
+
     public function __construct()
     {
         $this->addedAt = new \DateTimeImmutable();
@@ -122,4 +142,28 @@ class CollectionItem implements OwnedInterface
     public function setAddedAt(\DateTimeImmutable $addedAt): static { $this->addedAt = $addedAt; return $this; }
     public function getFinishedAt(): ?\DateTimeImmutable { return $this->finishedAt; }
     public function setFinishedAt(?\DateTimeImmutable $finishedAt): static { $this->finishedAt = $finishedAt; return $this; }
+    public function isFromSteam(): bool { return $this->fromSteam; }
+    public function setFromSteam(bool $fromSteam): static { $this->fromSteam = $fromSteam; return $this; }
+    public function getAchievementsUnlocked(): int { return $this->achievementsUnlocked; }
+    public function getAchievementsTotal(): int { return $this->achievementsTotal; }
+    public function getPlatinumAt(): ?\DateTimeImmutable { return $this->platinumAt; }
+
+    /** Pourcentage de succès obtenus, ou null pour un jeu sans succès */
+    #[Groups(['item:read'])]
+    public function getAchievementsPercent(): ?float
+    {
+        return $this->achievementsTotal ? round(100 * $this->achievementsUnlocked / $this->achievementsTotal, 1) : null;
+    }
+
+    /** Met à jour la progression ; la platine est datée du dernier succès obtenu, la première fois que tout est fait */
+    public function setAchievementProgress(int $unlocked, int $total, ?\DateTimeImmutable $lastUnlock): static
+    {
+        $this->achievementsUnlocked = $unlocked;
+        $this->achievementsTotal = $total;
+        if ($total > 0 && $unlocked === $total && null === $this->platinumAt) {
+            $this->platinumAt = $lastUnlock ?? new \DateTimeImmutable();
+        }
+
+        return $this;
+    }
 }

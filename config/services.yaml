@@ -21,3 +21,11 @@ services:
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
+
+# Tests : un faux Steam répond à la place du vrai (voir tests/Steam/FakeSteam.php)
+when@test:
+    services:
+        App\Tests\Steam\FakeSteam: ~
+    framework:
+        http_client:
+            mock_response_factory: App\Tests\Steam\FakeSteam

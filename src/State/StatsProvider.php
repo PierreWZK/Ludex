@@ -8,17 +8,19 @@ use App\ApiResource\Stats;
 use App\Entity\CollectionItem;
 use App\Entity\WishlistItem;
 use App\Enum\CollectionStatus;
+use App\Reward\RewardEngine;
+use App\Reward\Rewards;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\SecurityBundle\Security;
 
 /**
- * Les statistiques en quatre requêtes groupées, quelle que soit la taille de la collection.
+ * Les statistiques en quelques requêtes groupées, quelle que soit la taille de la collection.
  *
  * @implements ProviderInterface<Stats>
  */
 final readonly class StatsProvider implements ProviderInterface
 {
-    public function __construct(private EntityManagerInterface $em, private Security $security)
+    public function __construct(private EntityManagerInterface $em, private Security $security, private RewardEngine $rewards)
     {
     }
 
@@ -65,6 +67,7 @@ final readonly class StatsProvider implements ProviderInterface
             ->getQuery()->getSingleScalarResult();
 
         $minutes = (int) $totals['minutes'];
+        $metrics = $this->rewards->metrics($owner);
 
         return new Stats(
             games: (int) $totals['games'],
@@ -72,6 +75,8 @@ final readonly class StatsProvider implements ProviderInterface
             playtimeHours: round($minutes / 60, 1),
             averageRating: null === $totals['rating'] ? null : round((float) $totals['rating'], 1),
             wishlist: $wishlist,
+            achievements: $metrics[Rewards::ACHIEVEMENTS],
+            platinums: $metrics[Rewards::PLATINUMS],
             byStatus: $byStatus,
             byPlatform: $byPlatform,
         );

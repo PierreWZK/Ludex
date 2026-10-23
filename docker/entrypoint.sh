@@ -34,6 +34,12 @@ if [ "$1" = 'frankenphp' ]; then
     php bin/console lexik:jwt:generate-keypair --skip-if-exists
 
     php bin/console cache:warmup
+
+    # Worker des synchronisations Steam, à côté du serveur web : il se relance toutes les heures
+    # (ou après 50 synchros) pour libérer la mémoire, et redémarre s'il s'arrête sur une erreur
+    (while true; do
+        php bin/console messenger:consume async --time-limit=3600 --limit=50 --memory-limit=192M --no-interaction -q || sleep 10
+    done) &
 fi
 
 exec "$@"

@@ -166,9 +166,9 @@ final class AppFixtures extends Fixture
                 ->setStatus($status)
                 ->setPlaytimeMinutes($hours * 60)
                 ->setRating($rating)
-                ->setAddedAt(new \DateTimeImmutable(sprintf('-%d days', 400 - $i * 20)));
+                ->setAddedAt(new \DateTimeImmutable(sprintf('-%d days', 150 - $i * 8)));
             if (CollectionStatus::Finished === $status) {
-                $item->setFinishedAt(new \DateTimeImmutable(sprintf('-%d days', 380 - $i * 20)));
+                $item->setFinishedAt(new \DateTimeImmutable(sprintf('-%d days', 144 - $i * 8)));
             }
             $manager->persist($item);
         }

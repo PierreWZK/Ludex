@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Ludex · L'index de votre ludothèque, en API</title>
     <meta name="description" content="Une API REST pour gérer sa collection de jeux vidéo : plateformes, statut, temps de jeu, note, liste d'envies et statistiques. Documentée, sécurisée par jeton.">
-    <meta name="theme-color" content="#14110f">
+    <meta name="theme-color" content="#111113">
     <link rel="canonical" href="https://ludex.projectp.fr/">
     <link rel="icon" href="/favicon.svg" type="image/svg+xml">
     <meta property="og:type" content="website">
@@ -18,158 +18,274 @@
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
     <meta name="twitter:card" content="summary_large_image">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <style>
         :root {
-            --fond: #14110f; --fond-1: #1e1a17; --fond-2: #2a2420; --filet: rgb(255 240 220 / 0.12);
-            --texte: #f4ece1; --texte-2: #b9ab9a; --accent: #ff8a3d; --accent-encre: #2a1203;
-            --fini: #7bd88f; --encours: #6cb6ff; --afaire: #d8c27b; --abandon: #e07a7a;
-            --mono: ui-monospace, 'Cascadia Code', 'SF Mono', Consolas, monospace;
+            --fond: #111113; --carte: #1b1b1f; --carte-2: #232328; --champ: #0a0a0b; --puce: #2c2c32;
+            --filet: rgb(255 255 255 / 0.07); --texte: #f2f2f4; --texte-2: #a3a3ad; --texte-3: #6f6f79;
+            --lien: #a594ff; --vert: #3ecf6e; --orange: #f0a23b; --bleu: #5aa9ff; --rouge: #ef6a6a;
+            --rayon: 18px; --mono: 'JetBrains Mono', ui-monospace, Consolas, monospace;
         }
-        * { box-sizing: border-box; margin: 0; }
-        body { background: var(--fond); color: var(--texte); font: 400 1rem/1.55 system-ui, -apple-system, 'Segoe UI', sans-serif; }
-        a { color: var(--accent); }
-        .wrap { width: min(1180px, 100% - 32px); margin-inline: auto; }
-        header { padding-block: 22px; border-bottom: 1px solid var(--filet); }
-        header .wrap { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; }
-        .logo { font-weight: 800; letter-spacing: 0.14em; font-size: 1.125rem; text-decoration: none; color: var(--texte); }
-        .logo b { color: var(--accent); }
-        nav { display: flex; gap: 20px; flex-wrap: wrap; }
-        nav a { color: var(--texte-2); text-decoration: none; font-weight: 600; }
-        nav a:hover { color: var(--texte); }
-        .hero { padding-block: clamp(48px, 8vw, 96px) 40px; display: grid; grid-template-columns: minmax(0, 6fr) minmax(0, 5fr); gap: clamp(28px, 5vw, 64px); align-items: center; }
-        h1 { font-size: clamp(2.25rem, 1.4rem + 3.6vw, 4.25rem); line-height: 1; letter-spacing: -0.02em; }
-        h1 em { font-style: normal; color: var(--accent); }
-        .lede { margin-top: 20px; font-size: clamp(1.125rem, 1rem + 0.5vw, 1.375rem); color: var(--texte-2); max-width: 42ch; }
-        .actions { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 28px; }
-        .btn { display: inline-flex; align-items: center; min-height: 46px; padding: 0 20px; border: 0; border-radius: 8px; font: inherit; font-weight: 700; cursor: pointer; text-decoration: none; }
-        .btn-accent { background: var(--accent); color: var(--accent-encre); }
-        .btn-ghost { background: var(--fond-2); color: var(--texte); }
-        pre { overflow-x: auto; padding: 18px 20px; background: var(--fond-1); border: 1px solid var(--filet); border-radius: 10px; font: 0.875rem/1.6 var(--mono); color: var(--texte-2); }
-        pre b { color: var(--accent); font-weight: 600; }
-        pre i { color: var(--fini); font-style: normal; }
-        section { padding-block: clamp(36px, 6vw, 64px); border-top: 1px solid var(--filet); }
-        h2 { font-size: clamp(1.5rem, 1.2rem + 1.2vw, 2.25rem); line-height: 1.1; margin-bottom: 8px; }
-        .sous { color: var(--texte-2); margin-bottom: 24px; max-width: 64ch; }
-        .chiffres { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
-        .chiffre { padding: 18px 20px; background: var(--fond-1); border: 1px solid var(--filet); border-radius: 10px; }
-        .chiffre dt { color: var(--texte-2); font-size: 0.875rem; font-weight: 600; }
-        .chiffre dd { font-size: clamp(1.75rem, 1.4rem + 1.4vw, 2.5rem); font-weight: 800; font-variant-numeric: tabular-nums; }
-        .barres { display: grid; gap: 8px; margin-top: 20px; }
-        .barre { display: grid; grid-template-columns: 170px 1fr 70px; gap: 12px; align-items: center; font-size: 0.9375rem; }
-        .barre span:last-child { text-align: right; color: var(--texte-2); font-variant-numeric: tabular-nums; }
-        .barre i { display: block; height: 10px; border-radius: 5px; background: var(--accent); }
-        .filtres { display: flex; flex-wrap: wrap; gap: 12px; align-items: end; margin-bottom: 18px; }
-        label { display: grid; gap: 4px; font-size: 0.8125rem; font-weight: 600; color: var(--texte-2); }
-        select { min-height: 42px; padding: 0 12px; background: var(--fond-1); color: var(--texte); border: 1px solid var(--filet); border-radius: 8px; font: inherit; }
-        .requete { font: 0.875rem var(--mono); color: var(--texte-2); margin-bottom: 14px; overflow-wrap: anywhere; }
-        .requete b { color: var(--accent); font-weight: 600; }
-        .jeux { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
-        .jeu { display: grid; gap: 6px; padding: 16px 18px; background: var(--fond-1); border: 1px solid var(--filet); border-left: 4px solid var(--statut, var(--filet)); border-radius: 10px; }
-        .jeu h3 { font-size: 1.0625rem; line-height: 1.25; }
-        .jeu p { color: var(--texte-2); font-size: 0.9375rem; }
-        .jeu .meta { display: flex; justify-content: space-between; gap: 8px; font-size: 0.875rem; }
-        .statut { font-weight: 700; color: var(--statut); }
-        .s-finished { --statut: var(--fini); } .s-playing { --statut: var(--encours); } .s-backlog { --statut: var(--afaire); } .s-abandoned { --statut: var(--abandon); }
-        .envies { display: grid; gap: 8px; }
-        .envie { display: flex; justify-content: space-between; gap: 16px; padding: 12px 16px; background: var(--fond-1); border: 1px solid var(--filet); border-radius: 10px; }
-        .envie small { color: var(--texte-2); }
-        .routes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px 24px; font: 0.875rem/1.5 var(--mono); }
-        .routes b { display: inline-block; width: 6ch; color: var(--accent); font-weight: 600; }
-        .erreur { padding: 14px 16px; border-radius: 10px; background: rgb(224 122 122 / 0.12); color: var(--abandon); }
-        footer { padding-block: 28px; border-top: 1px solid var(--filet); color: var(--texte-2); font-size: 0.875rem; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        html { scroll-behavior: smooth; scroll-padding-top: 110px; }
+        body {
+            min-height: 100vh; color: var(--texte); font: 500 15px/1.55 Manrope, system-ui, sans-serif;
+            background:
+                radial-gradient(60% 45% at 62% 18%, rgb(150 150 160 / 0.32), transparent 70%),
+                radial-gradient(40% 35% at 8% 92%, rgb(215 150 150 / 0.20), transparent 70%),
+                radial-gradient(50% 40% at 100% 55%, rgb(20 20 22 / 0.9), transparent 70%),
+                var(--fond);
+            background-attachment: fixed;
+        }
+        a { color: var(--lien); text-decoration: none; }
+        a:hover { text-decoration: underline; text-underline-offset: 3px; }
+        code { font: 0.92em var(--mono); color: var(--texte); }
+        .wrap { width: min(1080px, 100% - 32px); margin-inline: auto; }
+
+        /* Barre de navigation : une pilule noire qui flotte au-dessus de la page */
+        .nav { position: sticky; top: 16px; z-index: 10; display: flex; align-items: center; gap: 28px; margin-top: 16px; padding: 12px 14px 12px 28px; background: rgb(6 6 7 / 0.92); backdrop-filter: blur(12px); border-radius: 999px; }
+        .logo { font-weight: 800; font-size: 1.25rem; letter-spacing: -0.02em; color: var(--texte); }
+        .logo b { color: var(--vert); font-weight: 800; }
+        .nav-liens { display: flex; gap: 22px; font-size: 0.875rem; }
+        .nav-liens a { color: var(--texte); font-weight: 600; }
+        .nav-liens a[aria-current] { color: var(--lien); }
+        .nav-droite { display: flex; align-items: center; gap: 14px; margin-left: auto; font-size: 0.875rem; font-weight: 600; }
+        .nav-droite a { color: var(--texte); display: inline-flex; align-items: center; gap: 8px; }
+        .pastille-api { display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 999px; background: var(--puce); }
+        .pastille-api i { width: 8px; height: 8px; border-radius: 50%; background: var(--texte-3); }
+        .pastille-api.ok i { background: var(--vert); }
+
+        /* En-tête centré, comme une page de notes de version */
+        .tete { padding-block: clamp(64px, 11vw, 120px) 28px; text-align: center; }
+        h1 { font-size: clamp(2.5rem, 1.6rem + 3.6vw, 4.25rem); font-weight: 800; letter-spacing: -0.035em; line-height: 1.02; }
+        .tete p { margin: 18px auto 0; max-width: 54ch; color: var(--texte-2); font-size: 1.0625rem; }
+        .tete p code { color: var(--texte); }
+
+        .recherche { display: grid; grid-template-columns: minmax(0, 2.2fr) minmax(0, 1.4fr) minmax(0, 1.4fr) auto; gap: 10px; align-items: center; margin-top: 40px; }
+        .champ { position: relative; display: flex; align-items: center; height: 56px; padding: 0 18px; background: var(--champ); border-radius: 14px; }
+        .champ input, .champ select { width: 100%; height: 100%; border: 0; outline: 0; background: none; color: var(--texte); font: inherit; appearance: none; }
+        .champ input::placeholder { color: var(--texte-3); }
+        .champ select { cursor: pointer; padding-right: 22px; }
+        .champ select option { background: var(--champ); }
+        .champ svg { flex: none; width: 18px; height: 18px; color: var(--texte-3); pointer-events: none; }
+        .champ .chevron { position: absolute; right: 16px; }
+        .champ:focus-within { box-shadow: 0 0 0 1.5px var(--lien); }
+        .bascule { display: flex; align-items: center; gap: 10px; padding-left: 6px; color: var(--texte-2); font-size: 0.8125rem; line-height: 1.2; text-align: left; cursor: pointer; }
+        .bascule input { position: absolute; opacity: 0; }
+        .bascule span:first-of-type { position: relative; flex: none; width: 42px; height: 24px; border-radius: 999px; background: var(--puce); transition: background 160ms; }
+        .bascule span:first-of-type::after { content: ''; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%; background: #fff; transition: transform 160ms; }
+        .bascule input:checked + span { background: var(--vert); }
+        .bascule input:checked + span::after { transform: translateX(18px); }
+        .bascule input:focus-visible + span { box-shadow: 0 0 0 2px var(--lien); }
+
+        .puces { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 18px; }
+        .puce { display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; border: 0; border-radius: 999px; background: var(--puce); color: var(--texte); font: 600 0.8125rem Manrope, sans-serif; cursor: pointer; }
+        .puce:hover { background: #3a3a42; }
+        .puce[aria-pressed='true'] { background: #e9e9ee; color: #111; }
+        .puce[aria-pressed='true']::after { content: '✓'; display: grid; place-items: center; width: 16px; height: 16px; border-radius: 50%; background: #555; color: #fff; font-size: 0.625rem; }
+
+        /* Les chiffres, en une rangée de cartes */
+        .chiffres { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-top: 56px; }
+        .chiffre { text-align: left; padding: 18px 20px; background: rgb(27 27 31 / 0.82); border-radius: var(--rayon); }
+        .chiffre dt { color: var(--texte-3); font-size: 0.8125rem; font-weight: 600; }
+        .chiffre dd { margin-top: 4px; font-size: 1.75rem; font-weight: 800; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+        .requete { margin-top: 36px; text-align: center; color: var(--texte-3); font: 0.8125rem var(--mono); overflow-wrap: anywhere; }
+        .requete b { color: var(--lien); font-weight: 500; }
+
+        /* Le journal : la collection groupée par mois d'ajout */
+        .journal { display: grid; gap: 56px; padding-block: 36px 96px; }
+        .mois { display: grid; grid-template-columns: 200px 1fr; gap: 28px; align-items: start; }
+        .mois-titre { position: sticky; top: 112px; padding-left: 16px; border-left: 4px solid var(--vert); font-size: 1.375rem; font-weight: 700; line-height: 1.2; text-transform: capitalize; }
+        .mois-titre small { display: block; margin-top: 4px; color: var(--texte-3); font-size: 0.8125rem; font-weight: 600; text-transform: none; }
+        .entrees { display: grid; gap: 12px; }
+        .entree { display: grid; grid-template-columns: 96px 1fr; gap: 16px; }
+        .statut { padding-top: 26px; text-align: right; font-size: 0.8125rem; font-weight: 700; }
+        .s-finished { color: var(--vert); } .s-playing { color: var(--bleu); } .s-backlog { color: var(--orange); } .s-abandoned { color: var(--rouge); }
+        .carte { position: relative; padding: 22px 24px; background: rgb(27 27 31 / 0.9); border-radius: var(--rayon); }
+        .carte-tete { display: flex; align-items: center; gap: 10px; color: var(--texte-2); font-size: 0.8125rem; }
+        .etiquette { padding: 3px 10px; border-radius: 999px; background: #ececf0; color: #17171a; font-weight: 700; font-size: 0.75rem; }
+        .carte h3 { margin-top: 14px; font-size: 1.1875rem; font-weight: 700; letter-spacing: -0.01em; }
+        .carte p { margin-top: 8px; color: var(--texte-2); font-size: 0.875rem; }
+        .carte ul { margin-top: 10px; list-style: none; display: grid; gap: 4px; font-size: 0.875rem; color: var(--texte-2); }
+        .carte li { display: flex; gap: 10px; align-items: baseline; }
+        .carte li::before { content: ''; flex: none; width: 6px; height: 6px; border-radius: 50%; background: var(--texte-3); transform: translateY(-1px); }
+        .carte li b { color: var(--texte); font-weight: 600; }
+        .copier { position: absolute; top: 16px; right: 16px; display: grid; place-items: center; width: 32px; height: 32px; border: 0; border-radius: 10px; background: var(--puce); color: var(--texte-2); cursor: pointer; }
+        .copier:hover { color: var(--texte); background: #3a3a42; }
+        .copier svg { width: 15px; height: 15px; }
+        .vide { padding: 28px; border-radius: var(--rayon); background: rgb(27 27 31 / 0.82); color: var(--texte-2); text-align: center; }
+
+        /* Liste d'envies et routes : mêmes cartes, en grille */
+        .bloc { padding-block: 28px 72px; }
+        .bloc h2 { font-size: clamp(1.75rem, 1.3rem + 1.6vw, 2.5rem); font-weight: 800; letter-spacing: -0.03em; }
+        .bloc > p { margin-top: 10px; color: var(--texte-2); max-width: 62ch; }
+        .grille { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; margin-top: 28px; }
+        .route { display: flex; align-items: center; gap: 12px; padding: 16px 18px; background: rgb(27 27 31 / 0.9); border-radius: 14px; font: 0.8125rem var(--mono); }
+        .methode { flex: none; min-width: 58px; padding: 3px 0; border-radius: 6px; text-align: center; font-weight: 500; font-size: 0.6875rem; color: #111; }
+        .m-get { background: var(--bleu); } .m-post { background: var(--vert); } .m-patch { background: var(--orange); } .m-delete { background: var(--rouge); }
+        .route span:last-child { color: var(--texte-2); }
+
+        /* Récompenses : débloquées en clair, les autres en retrait avec leur progression */
+        .recompense { display: grid; gap: 10px; align-content: start; padding: 20px 22px; background: rgb(27 27 31 / 0.9); border-radius: var(--rayon); }
+        .recompense h3 { font-size: 1.0625rem; font-weight: 700; }
+        .recompense p { color: var(--texte-2); font-size: 0.875rem; }
+        .recompense .type { justify-self: start; padding: 3px 10px; border-radius: 999px; background: var(--puce); color: var(--texte-2); font-size: 0.75rem; font-weight: 700; text-transform: capitalize; }
+        .recompense.obtenue .type { background: var(--vert); color: #0b2414; }
+        .recompense:not(.obtenue) h3 { color: var(--texte-2); }
+        .progres { height: 6px; border-radius: 3px; background: var(--puce); overflow: hidden; }
+        .progres i { display: block; height: 100%; background: var(--lien); }
+        .recompense small { color: var(--texte-3); font-size: 0.8125rem; font-variant-numeric: tabular-nums; }
+
+        /* Steam : trois étapes */
+        .etapes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 28px; counter-reset: etape; }
+        .etape { padding: 22px; background: rgb(27 27 31 / 0.9); border-radius: var(--rayon); counter-increment: etape; }
+        .etape::before { content: counter(etape); display: grid; place-items: center; width: 30px; height: 30px; margin-bottom: 14px; border-radius: 50%; background: var(--vert); color: #0b2414; font-weight: 800; }
+        .etape h3 { font-size: 1.0625rem; font-weight: 700; }
+        .etape p { margin-top: 6px; color: var(--texte-2); font-size: 0.875rem; }
+        @media (max-width: 900px) { .etapes { grid-template-columns: 1fr; } }
+
+        footer { padding-block: 28px 40px; color: var(--texte-3); font-size: 0.8125rem; }
         footer .wrap { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
-        @media (max-width: 860px) {
-            .hero { grid-template-columns: 1fr; }
+        .alerte { padding: 14px 18px; border-radius: 14px; background: rgb(239 106 106 / 0.12); color: var(--rouge); }
+
+        @media (max-width: 900px) {
+            .nav-liens { display: none; }
+            .recherche { grid-template-columns: 1fr 1fr; }
+            .recherche .champ:first-child { grid-column: 1 / -1; }
+            .bascule { grid-column: 1 / -1; justify-self: center; }
             .chiffres { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-            .routes { grid-template-columns: 1fr; }
-            .barre { grid-template-columns: 110px 1fr 56px; }
+            .mois { grid-template-columns: 1fr; gap: 16px; }
+            .mois-titre { position: static; }
         }
+        @media (max-width: 560px) {
+            .nav { padding-left: 20px; gap: 12px; }
+            .nav-droite a.code { display: none; }
+            .recherche { grid-template-columns: 1fr; }
+            .entree { grid-template-columns: 1fr; gap: 6px; }
+            .statut { padding: 0 0 0 4px; text-align: left; }
+        }
+        @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
     </style>
 </head>
 <body>
-<header>
-    <div class="wrap">
-        <a class="logo" href="/">LUDE<b>X</b></a>
-        <nav aria-label="Navigation principale">
-            <a href="#collection">Démo</a>
+<div class="wrap">
+    <nav class="nav" aria-label="Navigation principale">
+        <a class="logo" href="/">lude<b>x</b></a>
+        <div class="nav-liens">
+            <a href="#journal" aria-current="page">Collection</a>
+            <a href="#envies">Envies</a>
+            <a href="#recompenses">Récompenses</a>
+            <a href="#steam">Steam</a>
             <a href="#routes">Routes</a>
-            <a href="/api/docs">Documentation</a>
-            <a href="https://github.com/PierreWZK/Ludex">Code</a>
-        </nav>
-    </div>
-</header>
-
-<main class="wrap">
-    <div class="hero">
-        <div>
-            <h1>Votre ludothèque, <em>en API.</em></h1>
-            <p class="lede">Une API REST pour suivre sa collection de jeux vidéo : plateforme, statut, temps de jeu, note, liste d'envies et statistiques.</p>
-            <div class="actions">
-                <a class="btn btn-accent" href="/api/docs">Ouvrir la documentation</a>
-                <a class="btn btn-ghost" href="#collection">Voir la démo en direct</a>
-            </div>
+            <a href="/api/docs">Swagger</a>
         </div>
-        <pre aria-label="Exemple d'appel"><b>POST</b> /api/auth
-{"email": "{{ demo_email }}", "password": "{{ demo_password }}"}
-<i>→ {"token": "eyJ0eXAiOiJKV1Qi…"}</i>
+        <div class="nav-droite">
+            <a class="code" href="https://github.com/PierreWZK/Ludex" aria-label="Code sur GitHub">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5a11.5 11.5 0 0 0-3.64 22.41c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.37-3.88-1.37-.52-1.33-1.28-1.69-1.28-1.69-1.05-.72.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.69 0-1.26.45-2.29 1.19-3.09-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.17 1.18a11 11 0 0 1 5.77 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.8 1.19 1.83 1.19 3.09 0 4.42-2.7 5.39-5.26 5.68.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 12 .5Z"/></svg>
+            </a>
+            <span class="pastille-api" id="etat"><i></i>Compte de démo</span>
+        </div>
+    </nav>
 
-<b>GET</b> /api/collection_items?status=finished&platform=ps5
-Authorization: Bearer &lt;jeton&gt;
-<i>→ Elden Ring, Astro Bot</i></pre>
-    </div>
+    <header class="tete">
+        <h1>Votre ludothèque, en API</h1>
+        <p>Collection, liste d'envies et statistiques de vos jeux vidéo. Cette page se connecte avec le compte de démo (<code>{{ demo_email }}</code> / <code>{{ demo_password }}</code>) et interroge l'API en direct.</p>
 
-    <section id="stats" aria-labelledby="stats-titre">
-        <h2 id="stats-titre">Les chiffres du compte de démo</h2>
-        <p class="sous">Cette page se connecte avec le compte de démo (<code>{{ demo_email }}</code> / <code>{{ demo_password }}</code>) et appelle <code>GET /api/stats</code>.</p>
-        <div id="stats-contenu"><p class="sous">Connexion à l'API…</p></div>
-    </section>
-
-    <section id="collection" aria-labelledby="collection-titre">
-        <h2 id="collection-titre">La collection</h2>
-        <p class="sous">Les filtres se combinent ; chaque changement relance la requête affichée.</p>
-        <form class="filtres" id="filtres">
-            <label>Statut
-                <select name="status">
-                    <option value="">Tous</option>
+        <form class="recherche" id="filtres" role="search">
+            <label class="champ">
+                <input type="search" name="title" placeholder="Rechercher un jeu" aria-label="Rechercher un jeu">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+            </label>
+            <label class="champ">
+                <select name="status" aria-label="Statut">
+                    <option value="">Tous les statuts</option>
                     <option value="playing">En cours</option>
                     <option value="finished">Fini</option>
                     <option value="backlog">À faire</option>
                     <option value="abandoned">Abandonné</option>
                 </select>
+                <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
             </label>
-            <label>Plateforme <select name="platform"><option value="">Toutes</option></select></label>
-            <label>Genre <select name="genre"><option value="">Tous</option></select></label>
-            <label>Trier par
-                <select name="order">
-                    <option value="">Ajout récent</option>
-                    <option value="order[playtimeMinutes]=desc">Temps de jeu</option>
-                    <option value="order[rating]=desc">Note</option>
-                </select>
+            <label class="champ">
+                <select name="platform" aria-label="Plateforme"><option value="">Toutes les plateformes</option></select>
+                <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+            </label>
+            <label class="bascule">
+                <input type="checkbox" name="joues">
+                <span aria-hidden="true"></span>
+                <span>Les plus joués<br>d'abord</span>
             </label>
         </form>
-        <p class="requete" id="requete"></p>
-        <div class="jeux" id="jeux" aria-live="polite"></div>
-    </section>
-
-    <section id="envies" aria-labelledby="envies-titre">
-        <h2 id="envies-titre">La liste d'envies</h2>
-        <p class="sous"><code>GET /api/wishlist_items</code>, triée par priorité.</p>
-        <div class="envies" id="envies-liste"></div>
-    </section>
-
-    <section id="routes" aria-labelledby="routes-titre">
-        <h2 id="routes-titre">Les routes</h2>
-        <p class="sous">Le catalogue se lit sans compte ; la collection, la liste d'envies et les statistiques demandent un jeton. Un joueur ne voit jamais les données d'un autre.</p>
-        <div class="routes">
-            <span><b>POST</b>/api/register</span><span><b>POST</b>/api/auth</span>
-            <span><b>GET</b>/api/me</span><span><b>GET</b>/api/stats</span>
-            <span><b>GET</b>/api/games?title=&amp;platform=&amp;genre=</span><span><b>GET</b>/api/platforms · /api/genres</span>
-            <span><b>GET</b>/api/collection_items</span><span><b>POST</b>/api/collection_items</span>
-            <span><b>PATCH</b>/api/collection_items/{id}</span><span><b>DELETE</b>/api/collection_items/{id}</span>
-            <span><b>GET</b>/api/wishlist_items</span><span><b>POST</b>/api/wishlist_items</span>
+        <div class="puces" id="genres" role="group" aria-label="Genres">
+            <button type="button" class="puce" aria-pressed="true" data-genre="">Tous les genres</button>
         </div>
-    </section>
-</main>
+
+        <dl class="chiffres" id="chiffres" aria-live="polite">
+            <div class="chiffre"><dt>Jeux</dt><dd>–</dd></div>
+            <div class="chiffre"><dt>Temps de jeu</dt><dd>–</dd></div>
+            <div class="chiffre"><dt>Note moyenne</dt><dd>–</dd></div>
+            <div class="chiffre"><dt>Envies</dt><dd>–</dd></div>
+        </dl>
+        <p class="requete" id="requete"></p>
+    </header>
+
+    <main>
+        <section class="journal" id="journal" aria-label="La collection, par mois d'ajout" aria-live="polite"></section>
+
+        <section class="bloc" id="envies" aria-labelledby="envies-titre">
+            <h2 id="envies-titre">Liste d'envies</h2>
+            <p><code>GET /api/wishlist_items</code>, triée par priorité.</p>
+            <div class="grille" id="envies-liste"></div>
+        </section>
+
+        <section class="bloc" id="recompenses" aria-labelledby="recompenses-titre">
+            <h2 id="recompenses-titre">Récompenses</h2>
+            <p><code>GET /api/rewards</code> : badges, cadres et titres débloqués par paliers. Le compte de démo n'a pas lié de compte Steam : les récompenses de succès et de platines l'attendent encore.</p>
+            <div class="grille" id="recompenses-liste"></div>
+        </section>
+
+        <section class="bloc" id="steam" aria-labelledby="steam-titre">
+            <h2 id="steam-titre">Votre bibliothèque Steam</h2>
+            <p>Ludex importe vos jeux, votre temps de jeu et vos succès Steam, pour suivre les succès qui restent et décrocher des platines. Votre profil et ses « Détails des jeux » doivent être publics.</p>
+            <div class="etapes">
+                <div class="etape"><h3>Se connecter via Steam</h3><p><code>POST /api/steam/link</code> renvoie une adresse Steam. Vous vous y connectez : Steam confirme votre compte à Ludex, sans partager d'autre donnée.</p></div>
+                <div class="etape"><h3>Synchroniser</h3><p><code>POST /api/steam/sync</code> importe la bibliothèque en tâche de fond, une fois par heure au plus. <code>GET /api/steam</code> dit où elle en est.</p></div>
+                <div class="etape"><h3>Chasser les succès</h3><p><code>GET /api/collection_items/{id}/achievements?state=todo</code> liste ceux qui restent, des plus courants aux plus rares. 100 % : c'est une platine.</p></div>
+            </div>
+        </section>
+
+        <section class="bloc" id="routes" aria-labelledby="routes-titre">
+            <h2 id="routes-titre">Les routes</h2>
+            <p>Le catalogue se lit sans compte. La collection, la liste d'envies et les statistiques demandent un jeton : un joueur ne voit jamais les données d'un autre. Tout est décrit dans <a href="/api/docs">Swagger</a>.</p>
+            <div class="grille">
+                {% for route in [
+                    ['post', '/api/register', 'Créer un compte'],
+                    ['post', '/api/auth', 'Obtenir un jeton'],
+                    ['get', '/api/me', 'Mon compte'],
+                    ['get', '/api/stats', 'Mes chiffres'],
+                    ['get', '/api/games', 'Le catalogue'],
+                    ['get', '/api/platforms', 'Les plateformes'],
+                    ['get', '/api/collection_items', 'Ma collection'],
+                    ['post', '/api/collection_items', 'Ajouter un jeu'],
+                    ['patch', '/api/collection_items/{id}', 'Statut, temps, note'],
+                    ['delete', '/api/collection_items/{id}', 'Retirer un jeu'],
+                    ['get', '/api/wishlist_items', 'Mes envies'],
+                    ['post', '/api/wishlist_items', 'Ajouter une envie'],
+                    ['get', '/api/rewards', 'Mes récompenses'],
+                    ['get', '/api/steam', 'Mon compte Steam'],
+                    ['post', '/api/steam/link', 'Lier Steam'],
+                    ['post', '/api/steam/sync', 'Synchroniser'],
+                    ['get', '/api/collection_items/{id}/achievements', 'Succès d\'un jeu'],
+                    ['delete', '/api/steam', 'Délier Steam'],
+                ] %}
+                    <div class="route"><span class="methode m-{{ route[0] }}">{{ route[0]|upper }}</span><span>{{ route[1] }}</span></div>
+                {% endfor %}
+            </div>
+        </section>
+    </main>
+</div>
 
 <footer>
     <div class="wrap">
@@ -182,7 +298,11 @@ Authorization: Bearer &lt;jeton&gt;
     const STATUTS = { backlog: 'À faire', playing: 'En cours', finished: 'Fini', abandoned: 'Abandonné' };
     const heures = (minutes) => `${(minutes / 60).toLocaleString('fr-FR', { maximumFractionDigits: 1 })} h`;
     const echappe = (texte) => String(texte ?? '').replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
+    const jour = (iso) => new Date(iso).toLocaleDateString('fr-FR');
+    const mois = (iso) => new Date(iso).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+    const ICONE_COPIER = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>';
     let jeton = null;
+    let genre = '';
 
     async function api(chemin) {
         const reponse = await fetch(chemin, { headers: { Accept: 'application/ld+json', ...(jeton && { Authorization: `Bearer ${jeton}` }) } });
@@ -198,64 +318,127 @@ Authorization: Bearer &lt;jeton&gt;
         });
         if (!reponse.ok) throw new Error(`/api/auth : ${reponse.status}`);
         jeton = (await reponse.json()).token;
+        document.getElementById('etat').classList.add('ok');
     }
 
-    async function stats() {
+    async function chiffres() {
         const s = await api('/api/stats');
-        const max = Math.max(1, ...s.byPlatform.map((p) => p.games));
-        document.getElementById('stats-contenu').innerHTML = `
-            <dl class="chiffres">
-                <div class="chiffre"><dt>Jeux</dt><dd>${s.games}</dd></div>
-                <div class="chiffre"><dt>Temps de jeu</dt><dd>${heures(s.playtimeMinutes)}</dd></div>
-                <div class="chiffre"><dt>Note moyenne</dt><dd>${s.averageRating === null ? '–' : s.averageRating.toLocaleString('fr-FR') + '/10'}</dd></div>
-                <div class="chiffre"><dt>Envies</dt><dd>${s.wishlist}</dd></div>
-            </dl>
-            <div class="barres">${s.byPlatform.map((p) => `
-                <div class="barre"><span>${echappe(p.platform)}</span><i style="width:${p.games / max * 100}%"></i><span>${p.games} jeu${p.games > 1 ? 'x' : ''}</span></div>`).join('')}
-            </div>`;
+        const valeurs = [s.games, heures(s.playtimeMinutes), s.averageRating == null ? '–' : `${s.averageRating.toLocaleString('fr-FR')}/10`, s.wishlist];
+        document.querySelectorAll('#chiffres dd').forEach((dd, i) => { dd.textContent = valeurs[i]; });
     }
 
-    async function collection() {
+    /** Le chemin de la requête, d'après les champs : il est affiché tel quel sous les chiffres */
+    function chemin() {
         const champs = new FormData(document.getElementById('filtres'));
-        const parametres = ['status', 'platform', 'genre'].filter((n) => champs.get(n)).map((n) => `${n}=${encodeURIComponent(champs.get(n))}`);
-        if (champs.get('order')) parametres.push(champs.get('order'));
-        const chemin = `/api/collection_items${parametres.length ? '?' + parametres.join('&') : ''}`;
-        document.getElementById('requete').innerHTML = `<b>GET</b> ${echappe(decodeURIComponent(chemin))}`;
-        const page = await api(chemin);
-        document.getElementById('jeux').innerHTML = page.member.length ? page.member.map((i) => `
-            <article class="jeu s-${i.status}">
-                <h3>${echappe(i.game.title)}</h3>
-                <p>${echappe(i.platform.name)} · ${i.game.genres.map((g) => echappe(g.name)).join(', ')}</p>
-                <div class="meta"><span class="statut">${STATUTS[i.status]}</span><span>${heures(i.playtimeMinutes)}${i.rating === null ? '' : ` · ${i.rating}/10`}</span></div>
-            </article>`).join('') : '<p class="sous">Aucun jeu ne correspond à ces filtres.</p>';
+        const p = new URLSearchParams();
+        ['title', 'status', 'platform'].forEach((n) => champs.get(n) && p.set(n, champs.get(n)));
+        if (genre) p.set('genre', genre);
+        if (champs.get('joues')) p.set('order[playtimeMinutes]', 'desc');
+        return `/api/collection_items${p.size ? '?' + p : ''}`;
+    }
+
+    async function journal() {
+        const c = chemin();
+        document.getElementById('requete').innerHTML = `<b>GET</b> ${echappe(decodeURIComponent(c))}`;
+        const page = await api(c);
+        const zone = document.getElementById('journal');
+        if (!page.member.length) {
+            zone.innerHTML = '<p class="vide">Aucun jeu ne correspond à ces filtres.</p>';
+            return;
+        }
+        // Groupés par mois d'ajout, dans l'ordre de la réponse (tri de l'API conservé)
+        const groupes = new Map();
+        page.member.forEach((i) => {
+            const cle = mois(i.addedAt);
+            groupes.set(cle, [...(groupes.get(cle) ?? []), i]);
+        });
+        zone.innerHTML = [...groupes].map(([titre, items]) => `
+            <div class="mois">
+                <h2 class="mois-titre">${echappe(titre)}<small>${items.length} jeu${items.length > 1 ? 'x' : ''}</small></h2>
+                <div class="entrees">${items.map((i) => `
+                    <article class="entree">
+                        <span class="statut s-${i.status}">${STATUTS[i.status]}</span>
+                        <div class="carte">
+                            <div class="carte-tete"><span class="etiquette">${echappe(i.platform.name)}</span><span>${jour(i.addedAt)}</span></div>
+                            <h3>${echappe(i.game.title)}</h3>
+                            <ul>
+                                <li><span>Temps de jeu : <b>${heures(i.playtimeMinutes)}</b>${i.rating == null ? '' : ` · note <b>${i.rating}/10</b>`}</span></li>
+                                <li><span>${i.game.genres.map((g) => echappe(g.name)).join(', ')}${i.game.releaseYear ? ` · sorti en ${i.game.releaseYear}` : ''}</span></li>
+                                ${i.finishedAt ? `<li><span>Fini le ${jour(i.finishedAt)}</span></li>` : ''}
+                            </ul>
+                            <button type="button" class="copier" data-iri="${echappe(i['@id'])}" aria-label="Copier l'adresse API de ${echappe(i.game.title)}" title="Copier ${echappe(i['@id'])}">${ICONE_COPIER}</button>
+                        </div>
+                    </article>`).join('')}
+                </div>
+            </div>`).join('');
+    }
+
+    async function recompenses() {
+        const page = await api('/api/rewards');
+        // Les obtenues d'abord, puis les plus avancées
+        const liste = page.member.sort((a, b) => b.unlocked - a.unlocked || b.progress / b.threshold - a.progress / a.threshold);
+        document.getElementById('recompenses-liste').innerHTML = liste.map((r) => `
+            <div class="recompense${r.unlocked ? ' obtenue' : ''}">
+                <span class="type">${echappe(r.cosmetic)}</span>
+                <h3>${echappe(r.name)}</h3>
+                <p>${echappe(r.description)}</p>
+                ${r.unlocked
+                    ? `<small>Débloquée le ${jour(r.unlockedAt)}</small>`
+                    : `<div class="progres" aria-hidden="true"><i style="width:${r.progress / r.threshold * 100}%"></i></div><small>${r.progress.toLocaleString('fr-FR')} / ${r.threshold.toLocaleString('fr-FR')}</small>`}
+            </div>`).join('');
     }
 
     async function envies() {
         const page = await api('/api/wishlist_items');
         document.getElementById('envies-liste').innerHTML = page.member.map((w) => `
-            <div class="envie"><span>${echappe(w.game.title)}${w.note ? `<br><small>${echappe(w.note)}</small>` : ''}</span><small>Priorité ${w.priority}</small></div>`).join('');
+            <div class="carte">
+                <div class="carte-tete"><span class="etiquette">Priorité ${w.priority}</span><span>${jour(w.addedAt)}</span></div>
+                <h3>${echappe(w.game.title)}</h3>
+                ${w.note ? `<p>${echappe(w.note)}</p>` : ''}
+            </div>`).join('');
     }
 
     async function listes() {
         const [plateformes, genres] = await Promise.all([api('/api/platforms'), api('/api/genres')]);
-        const remplir = (nom, items) => document.querySelector(`select[name=${nom}]`).insertAdjacentHTML('beforeend', items.map((i) => `<option value="${echappe(i.slug)}">${echappe(i.name)}</option>`).join(''));
-        remplir('platform', plateformes.member);
-        remplir('genre', genres.member);
+        document.querySelector('select[name=platform]').insertAdjacentHTML('beforeend',
+            plateformes.member.map((p) => `<option value="${echappe(p.slug)}">${echappe(p.name)}</option>`).join(''));
+        document.getElementById('genres').insertAdjacentHTML('beforeend',
+            genres.member.map((g) => `<button type="button" class="puce" aria-pressed="false" data-genre="${echappe(g.slug)}">${echappe(g.name)}</button>`).join(''));
+    }
+
+    const relance = () => journal().catch(alerte);
+    let delai;
+    document.getElementById('filtres').addEventListener('input', () => { clearTimeout(delai); delai = setTimeout(relance, 250); });
+    document.getElementById('filtres').addEventListener('submit', (e) => e.preventDefault());
+    document.getElementById('genres').addEventListener('click', (e) => {
+        const puce = e.target.closest('.puce');
+        if (!puce) return;
+        genre = puce.dataset.genre;
+        document.querySelectorAll('#genres .puce').forEach((p) => p.setAttribute('aria-pressed', String(p === puce)));
+        relance();
+    });
+    document.getElementById('journal').addEventListener('click', async (e) => {
+        const bouton = e.target.closest('.copier');
+        if (!bouton) return;
+        try {
+            await navigator.clipboard.writeText(location.origin + bouton.dataset.iri);
+            bouton.textContent = '✓';
+            setTimeout(() => { bouton.innerHTML = ICONE_COPIER; }, 1200);
+        } catch { /* copie refusée : l'adresse reste dans l'infobulle */ }
+    });
+
+    function alerte(e) {
+        document.getElementById('journal').innerHTML = `<p class="alerte">L'API ne répond pas pour le moment (${echappe(e.message)}).</p>`;
     }
 
     (async () => {
         try {
             await connexion();
-            await Promise.all([stats(), collection(), envies(), listes()]);
-            document.getElementById('filtres').addEventListener('change', () => collection().catch(afficheErreur));
+            await Promise.all([chiffres(), journal(), envies(), recompenses(), listes()]);
         } catch (e) {
-            afficheErreur(e);
+            alerte(e);
         }
     })();
-
-    function afficheErreur(e) {
-        document.getElementById('stats-contenu').innerHTML = `<p class="erreur">L'API ne répond pas pour le moment (${echappe(e.message)}).</p>`;
-    }
 </script>
 </body>
 </html>

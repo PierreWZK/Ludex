@@ -48,6 +48,23 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[Groups(['user:register'])]
     private ?string $plainPassword = null;
 
+    /** SteamID64 prouvé par OpenID : un compte Steam ne se lie qu'à un seul compte Ludex */
+    #[ORM\Column(length: 20, unique: true, nullable: true)]
+    private ?string $steamId = null;
+
+    #[ORM\Column(length: 120, nullable: true)]
+    private ?string $steamPersona = null;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $steamAvatar = null;
+
+    #[ORM\Column(nullable: true)]
+    private ?\DateTimeImmutable $steamSyncedAt = null;
+
+    /** ok, en_attente, profil_prive, details_prives ou erreur */
+    #[ORM\Column(length: 20, nullable: true)]
+    private ?string $steamSyncStatus = null;
+
     public function getId(): ?int { return $this->id; }
     public function getEmail(): string { return $this->email; }
     public function setEmail(string $email): static { $this->email = mb_strtolower(trim($email)); return $this; }
@@ -65,4 +82,14 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setPassword(string $password): static { $this->password = $password; return $this; }
     public function getPlainPassword(): ?string { return $this->plainPassword; }
     public function setPlainPassword(?string $plainPassword): static { $this->plainPassword = $plainPassword; return $this; }
+    public function getSteamId(): ?string { return $this->steamId; }
+    public function setSteamId(?string $steamId): static { $this->steamId = $steamId; return $this; }
+    public function getSteamPersona(): ?string { return $this->steamPersona; }
+    public function setSteamPersona(?string $steamPersona): static { $this->steamPersona = $steamPersona; return $this; }
+    public function getSteamAvatar(): ?string { return $this->steamAvatar; }
+    public function setSteamAvatar(?string $steamAvatar): static { $this->steamAvatar = $steamAvatar; return $this; }
+    public function getSteamSyncedAt(): ?\DateTimeImmutable { return $this->steamSyncedAt; }
+    public function setSteamSyncedAt(?\DateTimeImmutable $steamSyncedAt): static { $this->steamSyncedAt = $steamSyncedAt; return $this; }
+    public function getSteamSyncStatus(): ?string { return $this->steamSyncStatus; }
+    public function setSteamSyncStatus(?string $steamSyncStatus): static { $this->steamSyncStatus = $steamSyncStatus; return $this; }
 }
