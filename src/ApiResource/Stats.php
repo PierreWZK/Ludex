@@ -23,6 +23,8 @@ final class Stats
         public float $playtimeHours = 0.0,
         public ?float $averageRating = null,
         public int $wishlist = 0,
+        public int $achievements = 0,
+        public int $platinums = 0,
         public array $byStatus = [],
         public array $byPlatform = [],
     ) {

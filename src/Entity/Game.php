@@ -64,6 +64,11 @@ class Game
     #[Groups(['game:read', 'game:write', 'item:read'])]
     private Collection $genres;
 
+    /** L'identifiant du jeu sur Steam, pour les jeux importés depuis Steam */
+    #[ORM\Column(unique: true, nullable: true)]
+    #[Groups(['game:read', 'item:read'])]
+    private ?int $steamAppId = null;
+
     #[ORM\Column(length: 255, nullable: true)]
     #[Assert\Url(requireTld: true)]
     #[Groups(['game:read', 'game:write', 'item:read'])]
@@ -82,6 +87,8 @@ class Game
     public function setTitle(string $title): static { $this->title = $title; return $this; }
     public function getReleaseYear(): ?int { return $this->releaseYear; }
     public function setReleaseYear(?int $releaseYear): static { $this->releaseYear = $releaseYear; return $this; }
+    public function getSteamAppId(): ?int { return $this->steamAppId; }
+    public function setSteamAppId(?int $steamAppId): static { $this->steamAppId = $steamAppId; return $this; }
     public function getCoverUrl(): ?string { return $this->coverUrl; }
     public function setCoverUrl(?string $coverUrl): static { $this->coverUrl = $coverUrl; return $this; }
 

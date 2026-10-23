@@ -2,64 +2,15 @@
 
 namespace App\Tests;
 
-use ApiPlatform\Test\ApiTestCase;
-use ApiPlatform\Test\Client;
 use App\DataFixtures\AppFixtures;
 use App\Entity\CollectionItem;
 use App\Entity\Game;
 use App\Entity\Platform;
 use App\Entity\User;
-use Doctrine\ORM\EntityManagerInterface;
-use Doctrine\ORM\Tools\SchemaTool;
 
-/**
- * Le parcours d'un joueur de bout en bout, sur une base SQLite recréée avant chaque test :
- * le catalogue et le compte de démo des fixtures, plus un second joueur, Bob.
- */
-final class ApiTest extends ApiTestCase
+/** Le parcours d'un joueur de bout en bout : catalogue, collection, filtres, validation, statistiques */
+final class ApiTest extends LudexTestCase
 {
-    protected static ?bool $alwaysBootKernel = true;
-
-    private EntityManagerInterface $em;
-
-    protected function setUp(): void
-    {
-        self::bootKernel();
-        $this->em = self::getContainer()->get(EntityManagerInterface::class);
-        $tool = new SchemaTool($this->em);
-        $metadata = $this->em->getMetadataFactory()->getAllMetadata();
-        $tool->dropSchema($metadata);
-        $tool->createSchema($metadata);
-
-        self::getContainer()->get(AppFixtures::class)->load($this->em);
-        $bob = (new User())->setEmail('bob@ludex.fr');
-        $bob->setPassword(self::getContainer()->get('security.user_password_hasher')->hashPassword($bob, 'bob-password'));
-        $this->em->persist($bob);
-        $this->em->flush();
-        $this->em->clear();
-    }
-
-    private function as(string $email, string $password): Client
-    {
-        $client = self::createClient();
-        $token = $client->request('POST', '/api/auth', ['json' => ['email' => $email, 'password' => $password]])->toArray()['token'];
-        $client->setDefaultOptions(['auth_bearer' => $token, 'headers' => ['Accept' => 'application/ld+json']]);
-
-        return $client;
-    }
-
-    private function demo(): Client
-    {
-        return $this->as(AppFixtures::DEMO_EMAIL, AppFixtures::DEMO_PASSWORD);
-    }
-
-    private function iri(string $class, array $criteria): string
-    {
-        $entity = $this->em->getRepository($class)->findOneBy($criteria);
-
-        return self::findIriBy($class, ['id' => $entity->getId()]);
-    }
-
     private function demoItemIri(): string
     {
         $demo = $this->em->getRepository(User::class)->findOneBy(['email' => AppFixtures::DEMO_EMAIL]);

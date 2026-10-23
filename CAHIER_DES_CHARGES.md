@@ -16,7 +16,7 @@ Ensuite, Ludex se branche sur les comptes de jeu : Steam d'abord (jeux joués, t
 | Version | Contenu | État |
 | --- | --- | --- |
 | **V1** | L'API de collection : jeux, plateformes, collection, liste d'envies, statistiques, JWT, Swagger, démo | 🚧 En cours |
-| **V2** | Steam : connexion du compte, synchronisation, succès à faire, platines, récompenses | Prévue |
+| **V2** | Steam : connexion du compte, synchronisation, succès à faire, platines, récompenses | 🚧 Codée, en attente de la clé Steam |
 | **V3** | Autres plateformes : étude puis connexion de celles qui le permettent | À étudier |
 
 ---
@@ -116,21 +116,22 @@ Une clé d'API gratuite, liée au compte Steam du projet, gardée côté serveur
 - **Platine** (définition Ludex, Steam n'en a pas) : 100 % des succès d'un jeu, datée du dernier succès obtenu.
 - Cas particuliers :
   - les jeux sans succès ne comptent pas pour les platines ;
-  - un succès que plus personne n'obtient (rareté à 0 %) est signalé ;
-  - si un jeu ajoute des succès, la platine redevient incomplète, mais la date de la première platine est gardée.
+  - la rareté de chaque succès est renvoyée (`rarity`, en %) : un succès à 0 % se repère tout de suite ;
+  - la date de la première platine est gardée.
+- Limite connue : le schéma des succès d'un jeu n'est chargé qu'une fois. Si un jeu ajoute des succès plus tard, Ludex ne le voit pas encore (à faire : recharger le schéma périodiquement).
 
 ### 4.5 Récompenses
 
-- Paliers définis en base, par exemple : 10, 100, 1 000 succès ; 1, 5, 25 platines ; 50 jeux ; 100 h sur un même jeu ; un succès obtenu par moins de 1 % des joueurs.
+- Paliers définis dans le code (`App\Reward\Rewards`) : 1, 10, 100 jeux ; 100 h sur un même jeu ; 1 000 h au total ; 1, 100, 1 000 succès ; 1, 5, 25 platines ; un succès obtenu par moins de 1 % des joueurs.
 - Chaque déblocage est enregistré avec sa date et donne un cosmétique : badge, cadre d'avatar ou titre de profil.
-- Seuls les comptes prouvés par OpenID débloquent des récompenses.
+- Les récompenses de succès et de platines ne viennent que de comptes Steam prouvés par OpenID ; celles de collection (jeux, heures) comptent aussi les jeux saisis à la main.
 
 ### 4.6 Critères de réussite
 
-- [ ] Un compte Steam se lie par OpenID et ne peut pas être lié à deux comptes Ludex.
-- [ ] Un profil privé ou aux détails masqués renvoie un message qui dit quoi changer.
-- [ ] La liste des succès à faire et le pourcentage par jeu sont justes (testé avec des réponses Steam enregistrées).
-- [ ] Une platine et une récompense se débloquent au bon moment (testé).
+- [x] Un compte Steam se lie par OpenID et ne peut pas être lié à deux comptes Ludex.
+- [x] Un profil privé ou aux détails masqués renvoie un message qui dit quoi changer.
+- [x] La liste des succès à faire et le pourcentage par jeu sont justes (testé avec des réponses Steam enregistrées).
+- [x] Une platine et une récompense se débloquent au bon moment (testé).
 
 ---
 

@@ -5,6 +5,8 @@ api_platform:
 
         Connexion : `POST /api/auth` avec `{"email", "password"}` renvoie un jeton ; cliquez sur « Authorize » et collez `Bearer <jeton>`.
         Compte de démo : `demo@ludex.fr` / `ludex-demo`.
+
+        Steam : `POST /api/steam/link` renvoie l'adresse « Se connecter via Steam » (à ouvrir dans un navigateur), puis `POST /api/steam/sync` importe jeux, temps de jeu et succès.
     version: 1.0.0
     formats:
         jsonld: ['application/ld+json']

@@ -1,0 +1,50 @@
+{% set messages = {
+    lie: ['Compte Steam lié', "Votre compte Steam est maintenant relié à Ludex. Lancez la synchronisation avec POST /api/steam/sync : vos jeux, votre temps de jeu et vos succès arrivent dans votre collection en quelques minutes."],
+    expire: ['Lien expiré', "Ce lien de connexion n'est plus valable (10 minutes au plus). Redemandez-en un avec POST /api/steam/link."],
+    refuse: ['Connexion refusée', "Steam n'a pas confirmé cette connexion. Recommencez depuis POST /api/steam/link."],
+    deja_lie: ['Compte déjà lié', "Ce compte Steam est déjà relié à un autre compte Ludex. Un compte Steam ne se lie qu'une fois."],
+} %}
+{% set message = messages[outcome] %}
+<!doctype html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="noindex">
+    <title>{{ message[0] }} · Ludex</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; }
+        body {
+            min-height: 100vh; display: grid; place-items: center; padding: 24px; color: #f2f2f4;
+            font: 500 15px/1.6 Manrope, system-ui, sans-serif;
+            background: radial-gradient(60% 45% at 62% 18%, rgb(150 150 160 / 0.32), transparent 70%), radial-gradient(40% 35% at 8% 92%, rgb(215 150 150 / 0.2), transparent 70%), #111113;
+        }
+        main { width: min(520px, 100%); padding: 32px; border-radius: 18px; background: rgb(27 27 31 / 0.9); }
+        .logo { font-weight: 800; font-size: 1.25rem; color: #f2f2f4; text-decoration: none; }
+        .logo b { color: #3ecf6e; }
+        h1 { margin-top: 28px; padding-left: 14px; border-left: 4px solid {{ outcome == 'lie' ? '#3ecf6e' : '#ef6a6a' }}; font-size: 1.75rem; letter-spacing: -0.02em; line-height: 1.15; }
+        p { margin-top: 14px; color: #a3a3ad; }
+        .profil { display: flex; align-items: center; gap: 14px; margin-top: 22px; padding: 14px; border-radius: 14px; background: #232328; }
+        .profil img { width: 48px; height: 48px; border-radius: 10px; }
+        a.btn { display: inline-flex; margin-top: 24px; padding: 12px 18px; border-radius: 12px; background: #2c2c32; color: #f2f2f4; font-weight: 700; text-decoration: none; }
+    </style>
+</head>
+<body>
+<main>
+    <a class="logo" href="/">lude<b>x</b></a>
+    <h1>{{ message[0] }}</h1>
+    <p>{{ message[1] }}</p>
+    {% if user and user.steamPersona %}
+        <div class="profil">
+            {% if user.steamAvatar %}<img src="{{ user.steamAvatar }}" alt="">{% endif %}
+            <div><strong>{{ user.steamPersona }}</strong><br><small>SteamID {{ user.steamId }}</small></div>
+        </div>
+    {% endif %}
+    <a class="btn" href="/api/docs">Ouvrir la documentation</a>
+</main>
+</body>
+</html>
