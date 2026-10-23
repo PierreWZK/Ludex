@@ -1,0 +1,13 @@
+# Serveur web de l'image (FrankenPHP). Le HTTPS est géré par le proxy de Coolify : ici, du HTTP sur le port 80.
+{
+	frankenphp
+	auto_https off
+}
+
+:80 {
+	root * /app/public
+	encode zstd br gzip
+
+	# Fichiers existants servis tels quels, tout le reste passe par public/index.php
+	php_server
+}

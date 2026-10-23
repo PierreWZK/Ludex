@@ -1,0 +1,261 @@
+<!doctype html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Ludex · L'index de votre ludothèque, en API</title>
+    <meta name="description" content="Une API REST pour gérer sa collection de jeux vidéo : plateformes, statut, temps de jeu, note, liste d'envies et statistiques. Documentée, sécurisée par jeton.">
+    <meta name="theme-color" content="#14110f">
+    <link rel="canonical" href="https://ludex.projectp.fr/">
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+    <meta property="og:type" content="website">
+    <meta property="og:locale" content="fr_FR">
+    <meta property="og:site_name" content="Ludex">
+    <meta property="og:title" content="Ludex · L'index de votre ludothèque, en API">
+    <meta property="og:description" content="Collection, liste d'envies et statistiques de vos jeux vidéo, par une API REST documentée.">
+    <meta property="og:url" content="https://ludex.projectp.fr/">
+    <meta property="og:image" content="https://ludex.projectp.fr/og.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta name="twitter:card" content="summary_large_image">
+    <style>
+        :root {
+            --fond: #14110f; --fond-1: #1e1a17; --fond-2: #2a2420; --filet: rgb(255 240 220 / 0.12);
+            --texte: #f4ece1; --texte-2: #b9ab9a; --accent: #ff8a3d; --accent-encre: #2a1203;
+            --fini: #7bd88f; --encours: #6cb6ff; --afaire: #d8c27b; --abandon: #e07a7a;
+            --mono: ui-monospace, 'Cascadia Code', 'SF Mono', Consolas, monospace;
+        }
+        * { box-sizing: border-box; margin: 0; }
+        body { background: var(--fond); color: var(--texte); font: 400 1rem/1.55 system-ui, -apple-system, 'Segoe UI', sans-serif; }
+        a { color: var(--accent); }
+        .wrap { width: min(1180px, 100% - 32px); margin-inline: auto; }
+        header { padding-block: 22px; border-bottom: 1px solid var(--filet); }
+        header .wrap { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; }
+        .logo { font-weight: 800; letter-spacing: 0.14em; font-size: 1.125rem; text-decoration: none; color: var(--texte); }
+        .logo b { color: var(--accent); }
+        nav { display: flex; gap: 20px; flex-wrap: wrap; }
+        nav a { color: var(--texte-2); text-decoration: none; font-weight: 600; }
+        nav a:hover { color: var(--texte); }
+        .hero { padding-block: clamp(48px, 8vw, 96px) 40px; display: grid; grid-template-columns: minmax(0, 6fr) minmax(0, 5fr); gap: clamp(28px, 5vw, 64px); align-items: center; }
+        h1 { font-size: clamp(2.25rem, 1.4rem + 3.6vw, 4.25rem); line-height: 1; letter-spacing: -0.02em; }
+        h1 em { font-style: normal; color: var(--accent); }
+        .lede { margin-top: 20px; font-size: clamp(1.125rem, 1rem + 0.5vw, 1.375rem); color: var(--texte-2); max-width: 42ch; }
+        .actions { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 28px; }
+        .btn { display: inline-flex; align-items: center; min-height: 46px; padding: 0 20px; border: 0; border-radius: 8px; font: inherit; font-weight: 700; cursor: pointer; text-decoration: none; }
+        .btn-accent { background: var(--accent); color: var(--accent-encre); }
+        .btn-ghost { background: var(--fond-2); color: var(--texte); }
+        pre { overflow-x: auto; padding: 18px 20px; background: var(--fond-1); border: 1px solid var(--filet); border-radius: 10px; font: 0.875rem/1.6 var(--mono); color: var(--texte-2); }
+        pre b { color: var(--accent); font-weight: 600; }
+        pre i { color: var(--fini); font-style: normal; }
+        section { padding-block: clamp(36px, 6vw, 64px); border-top: 1px solid var(--filet); }
+        h2 { font-size: clamp(1.5rem, 1.2rem + 1.2vw, 2.25rem); line-height: 1.1; margin-bottom: 8px; }
+        .sous { color: var(--texte-2); margin-bottom: 24px; max-width: 64ch; }
+        .chiffres { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+        .chiffre { padding: 18px 20px; background: var(--fond-1); border: 1px solid var(--filet); border-radius: 10px; }
+        .chiffre dt { color: var(--texte-2); font-size: 0.875rem; font-weight: 600; }
+        .chiffre dd { font-size: clamp(1.75rem, 1.4rem + 1.4vw, 2.5rem); font-weight: 800; font-variant-numeric: tabular-nums; }
+        .barres { display: grid; gap: 8px; margin-top: 20px; }
+        .barre { display: grid; grid-template-columns: 170px 1fr 70px; gap: 12px; align-items: center; font-size: 0.9375rem; }
+        .barre span:last-child { text-align: right; color: var(--texte-2); font-variant-numeric: tabular-nums; }
+        .barre i { display: block; height: 10px; border-radius: 5px; background: var(--accent); }
+        .filtres { display: flex; flex-wrap: wrap; gap: 12px; align-items: end; margin-bottom: 18px; }
+        label { display: grid; gap: 4px; font-size: 0.8125rem; font-weight: 600; color: var(--texte-2); }
+        select { min-height: 42px; padding: 0 12px; background: var(--fond-1); color: var(--texte); border: 1px solid var(--filet); border-radius: 8px; font: inherit; }
+        .requete { font: 0.875rem var(--mono); color: var(--texte-2); margin-bottom: 14px; overflow-wrap: anywhere; }
+        .requete b { color: var(--accent); font-weight: 600; }
+        .jeux { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
+        .jeu { display: grid; gap: 6px; padding: 16px 18px; background: var(--fond-1); border: 1px solid var(--filet); border-left: 4px solid var(--statut, var(--filet)); border-radius: 10px; }
+        .jeu h3 { font-size: 1.0625rem; line-height: 1.25; }
+        .jeu p { color: var(--texte-2); font-size: 0.9375rem; }
+        .jeu .meta { display: flex; justify-content: space-between; gap: 8px; font-size: 0.875rem; }
+        .statut { font-weight: 700; color: var(--statut); }
+        .s-finished { --statut: var(--fini); } .s-playing { --statut: var(--encours); } .s-backlog { --statut: var(--afaire); } .s-abandoned { --statut: var(--abandon); }
+        .envies { display: grid; gap: 8px; }
+        .envie { display: flex; justify-content: space-between; gap: 16px; padding: 12px 16px; background: var(--fond-1); border: 1px solid var(--filet); border-radius: 10px; }
+        .envie small { color: var(--texte-2); }
+        .routes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px 24px; font: 0.875rem/1.5 var(--mono); }
+        .routes b { display: inline-block; width: 6ch; color: var(--accent); font-weight: 600; }
+        .erreur { padding: 14px 16px; border-radius: 10px; background: rgb(224 122 122 / 0.12); color: var(--abandon); }
+        footer { padding-block: 28px; border-top: 1px solid var(--filet); color: var(--texte-2); font-size: 0.875rem; }
+        footer .wrap { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+        @media (max-width: 860px) {
+            .hero { grid-template-columns: 1fr; }
+            .chiffres { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .routes { grid-template-columns: 1fr; }
+            .barre { grid-template-columns: 110px 1fr 56px; }
+        }
+    </style>
+</head>
+<body>
+<header>
+    <div class="wrap">
+        <a class="logo" href="/">LUDE<b>X</b></a>
+        <nav aria-label="Navigation principale">
+            <a href="#collection">Démo</a>
+            <a href="#routes">Routes</a>
+            <a href="/api/docs">Documentation</a>
+            <a href="https://github.com/PierreWZK/Ludex">Code</a>
+        </nav>
+    </div>
+</header>
+
+<main class="wrap">
+    <div class="hero">
+        <div>
+            <h1>Votre ludothèque, <em>en API.</em></h1>
+            <p class="lede">Une API REST pour suivre sa collection de jeux vidéo : plateforme, statut, temps de jeu, note, liste d'envies et statistiques.</p>
+            <div class="actions">
+                <a class="btn btn-accent" href="/api/docs">Ouvrir la documentation</a>
+                <a class="btn btn-ghost" href="#collection">Voir la démo en direct</a>
+            </div>
+        </div>
+        <pre aria-label="Exemple d'appel"><b>POST</b> /api/auth
+{"email": "{{ demo_email }}", "password": "{{ demo_password }}"}
+<i>→ {"token": "eyJ0eXAiOiJKV1Qi…"}</i>
+
+<b>GET</b> /api/collection_items?status=finished&platform=ps5
+Authorization: Bearer &lt;jeton&gt;
+<i>→ Elden Ring, Astro Bot</i></pre>
+    </div>
+
+    <section id="stats" aria-labelledby="stats-titre">
+        <h2 id="stats-titre">Les chiffres du compte de démo</h2>
+        <p class="sous">Cette page se connecte avec le compte de démo (<code>{{ demo_email }}</code> / <code>{{ demo_password }}</code>) et appelle <code>GET /api/stats</code>.</p>
+        <div id="stats-contenu"><p class="sous">Connexion à l'API…</p></div>
+    </section>
+
+    <section id="collection" aria-labelledby="collection-titre">
+        <h2 id="collection-titre">La collection</h2>
+        <p class="sous">Les filtres se combinent ; chaque changement relance la requête affichée.</p>
+        <form class="filtres" id="filtres">
+            <label>Statut
+                <select name="status">
+                    <option value="">Tous</option>
+                    <option value="playing">En cours</option>
+                    <option value="finished">Fini</option>
+                    <option value="backlog">À faire</option>
+                    <option value="abandoned">Abandonné</option>
+                </select>
+            </label>
+            <label>Plateforme <select name="platform"><option value="">Toutes</option></select></label>
+            <label>Genre <select name="genre"><option value="">Tous</option></select></label>
+            <label>Trier par
+                <select name="order">
+                    <option value="">Ajout récent</option>
+                    <option value="order[playtimeMinutes]=desc">Temps de jeu</option>
+                    <option value="order[rating]=desc">Note</option>
+                </select>
+            </label>
+        </form>
+        <p class="requete" id="requete"></p>
+        <div class="jeux" id="jeux" aria-live="polite"></div>
+    </section>
+
+    <section id="envies" aria-labelledby="envies-titre">
+        <h2 id="envies-titre">La liste d'envies</h2>
+        <p class="sous"><code>GET /api/wishlist_items</code>, triée par priorité.</p>
+        <div class="envies" id="envies-liste"></div>
+    </section>
+
+    <section id="routes" aria-labelledby="routes-titre">
+        <h2 id="routes-titre">Les routes</h2>
+        <p class="sous">Le catalogue se lit sans compte ; la collection, la liste d'envies et les statistiques demandent un jeton. Un joueur ne voit jamais les données d'un autre.</p>
+        <div class="routes">
+            <span><b>POST</b>/api/register</span><span><b>POST</b>/api/auth</span>
+            <span><b>GET</b>/api/me</span><span><b>GET</b>/api/stats</span>
+            <span><b>GET</b>/api/games?title=&amp;platform=&amp;genre=</span><span><b>GET</b>/api/platforms · /api/genres</span>
+            <span><b>GET</b>/api/collection_items</span><span><b>POST</b>/api/collection_items</span>
+            <span><b>PATCH</b>/api/collection_items/{id}</span><span><b>DELETE</b>/api/collection_items/{id}</span>
+            <span><b>GET</b>/api/wishlist_items</span><span><b>POST</b>/api/wishlist_items</span>
+        </div>
+    </section>
+</main>
+
+<footer>
+    <div class="wrap">
+        <span>Ludex · Jour 11 du défi <a href="https://projectp.fr/">30 jours, 30 projets</a></span>
+        <span>Symfony · API Platform · MySQL · <a href="https://github.com/PierreWZK/Ludex">Code sur GitHub</a></span>
+    </div>
+</footer>
+
+<script>
+    const STATUTS = { backlog: 'À faire', playing: 'En cours', finished: 'Fini', abandoned: 'Abandonné' };
+    const heures = (minutes) => `${(minutes / 60).toLocaleString('fr-FR', { maximumFractionDigits: 1 })} h`;
+    const echappe = (texte) => String(texte ?? '').replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
+    let jeton = null;
+
+    async function api(chemin) {
+        const reponse = await fetch(chemin, { headers: { Accept: 'application/ld+json', ...(jeton && { Authorization: `Bearer ${jeton}` }) } });
+        if (!reponse.ok) throw new Error(`${chemin} : ${reponse.status}`);
+        return reponse.json();
+    }
+
+    async function connexion() {
+        const reponse = await fetch('/api/auth', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: {{ demo_email|json_encode|raw }}, password: {{ demo_password|json_encode|raw }} }),
+        });
+        if (!reponse.ok) throw new Error(`/api/auth : ${reponse.status}`);
+        jeton = (await reponse.json()).token;
+    }
+
+    async function stats() {
+        const s = await api('/api/stats');
+        const max = Math.max(1, ...s.byPlatform.map((p) => p.games));
+        document.getElementById('stats-contenu').innerHTML = `
+            <dl class="chiffres">
+                <div class="chiffre"><dt>Jeux</dt><dd>${s.games}</dd></div>
+                <div class="chiffre"><dt>Temps de jeu</dt><dd>${heures(s.playtimeMinutes)}</dd></div>
+                <div class="chiffre"><dt>Note moyenne</dt><dd>${s.averageRating === null ? '–' : s.averageRating.toLocaleString('fr-FR') + '/10'}</dd></div>
+                <div class="chiffre"><dt>Envies</dt><dd>${s.wishlist}</dd></div>
+            </dl>
+            <div class="barres">${s.byPlatform.map((p) => `
+                <div class="barre"><span>${echappe(p.platform)}</span><i style="width:${p.games / max * 100}%"></i><span>${p.games} jeu${p.games > 1 ? 'x' : ''}</span></div>`).join('')}
+            </div>`;
+    }
+
+    async function collection() {
+        const champs = new FormData(document.getElementById('filtres'));
+        const parametres = ['status', 'platform', 'genre'].filter((n) => champs.get(n)).map((n) => `${n}=${encodeURIComponent(champs.get(n))}`);
+        if (champs.get('order')) parametres.push(champs.get('order'));
+        const chemin = `/api/collection_items${parametres.length ? '?' + parametres.join('&') : ''}`;
+        document.getElementById('requete').innerHTML = `<b>GET</b> ${echappe(decodeURIComponent(chemin))}`;
+        const page = await api(chemin);
+        document.getElementById('jeux').innerHTML = page.member.length ? page.member.map((i) => `
+            <article class="jeu s-${i.status}">
+                <h3>${echappe(i.game.title)}</h3>
+                <p>${echappe(i.platform.name)} · ${i.game.genres.map((g) => echappe(g.name)).join(', ')}</p>
+                <div class="meta"><span class="statut">${STATUTS[i.status]}</span><span>${heures(i.playtimeMinutes)}${i.rating === null ? '' : ` · ${i.rating}/10`}</span></div>
+            </article>`).join('') : '<p class="sous">Aucun jeu ne correspond à ces filtres.</p>';
+    }
+
+    async function envies() {
+        const page = await api('/api/wishlist_items');
+        document.getElementById('envies-liste').innerHTML = page.member.map((w) => `
+            <div class="envie"><span>${echappe(w.game.title)}${w.note ? `<br><small>${echappe(w.note)}</small>` : ''}</span><small>Priorité ${w.priority}</small></div>`).join('');
+    }
+
+    async function listes() {
+        const [plateformes, genres] = await Promise.all([api('/api/platforms'), api('/api/genres')]);
+        const remplir = (nom, items) => document.querySelector(`select[name=${nom}]`).insertAdjacentHTML('beforeend', items.map((i) => `<option value="${echappe(i.slug)}">${echappe(i.name)}</option>`).join(''));
+        remplir('platform', plateformes.member);
+        remplir('genre', genres.member);
+    }
+
+    (async () => {
+        try {
+            await connexion();
+            await Promise.all([stats(), collection(), envies(), listes()]);
+            document.getElementById('filtres').addEventListener('change', () => collection().catch(afficheErreur));
+        } catch (e) {
+            afficheErreur(e);
+        }
+    })();
+
+    function afficheErreur(e) {
+        document.getElementById('stats-contenu').innerHTML = `<p class="erreur">L'API ne répond pas pour le moment (${echappe(e.message)}).</p>`;
+    }
+</script>
+</body>
+</html>

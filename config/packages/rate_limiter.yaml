@@ -1,0 +1,15 @@
+framework:
+    rate_limiter:
+        # Inscriptions : 5 par heure et par adresse IP
+        registration:
+            policy: sliding_window
+            limit: 5
+            interval: '1 hour'
+
+# Tests : compteurs en mémoire, remis à zéro à chaque exécution
+when@test:
+    framework:
+        cache:
+            pools:
+                cache.rate_limiter:
+                    adapter: cache.adapter.array
