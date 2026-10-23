@@ -18,6 +18,8 @@ final class FakeSteam
 
     private const CELESTE = 504230;
     private const HADES = 1145360;
+    /** Un jeu sans succès : Steam refuse sa rareté (403) et plante sur les succès du joueur (500) */
+    private const NO_STATS = 1000;
 
     public function __invoke(string $method, string $url, array $options = []): MockResponse
     {
@@ -28,6 +30,11 @@ final class FakeSteam
             return new MockResponse("ns:http://specs.openid.net/auth/2.0\nis_valid:true\n");
         }
 
+        $appId = (int) ($query['appid'] ?? $query['gameid'] ?? 0);
+        if (self::NO_STATS === $appId && !str_contains($path, 'GetSchemaForGame')) {
+            return new MockResponse('{}', ['http_code' => str_contains($path, 'GetPlayerAchievements') ? 500 : 403]);
+        }
+
         $json = match (true) {
             str_contains($path, 'GetPlayerSummaries') => ['response' => ['players' => [[
                 'steamid' => $query['steamids'],
@@ -36,9 +43,10 @@ final class FakeSteam
                 'communityvisibilitystate' => self::PRIVATE_PROFILE === $query['steamids'] ? 1 : 3,
             ]]]],
             str_contains($path, 'GetOwnedGames') => self::PUBLIC === $query['steamid']
-                ? ['response' => ['game_count' => 3, 'games' => [
+                ? ['response' => ['game_count' => 4, 'games' => [
                     ['appid' => self::CELESTE, 'name' => 'Celeste', 'playtime_forever' => 600],
                     ['appid' => self::HADES, 'name' => 'Hades', 'playtime_forever' => 3840],
+                    ['appid' => self::NO_STATS, 'name' => 'Un jeu sans succès', 'playtime_forever' => 30],
                     ['appid' => 999, 'name' => 'Un jeu jamais lancé', 'playtime_forever' => 0],
                 ]]]
                 : ['response' => []],
