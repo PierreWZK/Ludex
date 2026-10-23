@@ -72,6 +72,7 @@ final class SteamTest extends LudexTestCase
         self::assertResponseStatusCodeSame(409);
     }
 
+    /** Un jeu dont Steam refuse les succès (403, 500) est importé sans bloquer la synchro */
     public function testSyncImportsGamesAchievementsPlatinumsAndRewards(): void
     {
         $this->linkSteam('bob@ludex.fr', FakeSteam::PUBLIC);
@@ -84,8 +85,8 @@ final class SteamTest extends LudexTestCase
         // Les jeux du catalogue sont retrouvés par leur titre, pas recréés
         self::assertSame(1, $this->em->getRepository(Game::class)->count(['title' => 'Celeste']));
         $items = $bob->request('GET', '/api/collection_items?order[playtimeMinutes]=desc')->toArray()['member'];
-        self::assertSame(['Hades', 'Celeste', 'Un jeu jamais lancé'], array_column(array_column($items, 'game'), 'title'));
-        self::assertSame([3840, 600, 0], array_column($items, 'playtimeMinutes'));
+        self::assertSame(['Hades', 'Celeste', 'Un jeu sans succès', 'Un jeu jamais lancé'], array_column(array_column($items, 'game'), 'title'));
+        self::assertSame([3840, 600, 30, 0], array_column($items, 'playtimeMinutes'));
         self::assertSame([100, 66.7], [$items[0]['achievementsPercent'], $items[1]['achievementsPercent']]);
 
         // Succès à faire : celui qui manque à Celeste
@@ -101,7 +102,7 @@ final class SteamTest extends LudexTestCase
         self::assertStringStartsWith('2024-10-27', $platinums[0]['platinumAt']);
 
         $bob->request('GET', '/api/account/stats');
-        self::assertJsonContains(['achievements' => 4, 'platinums' => 1, 'games' => 3]);
+        self::assertJsonContains(['achievements' => 4, 'platinums' => 1, 'games' => 4]);
 
         $rewards = array_column($bob->request('GET', '/api/account/rewards')->toArray()['member'], 'unlocked', 'code');
         self::assertTrue($rewards['premier-succes']);

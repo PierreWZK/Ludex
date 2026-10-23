@@ -59,7 +59,8 @@ final readonly class SteamClient
     }
 
     /**
-     * Les succès du joueur pour un jeu ; vide pour un jeu sans statistiques (Steam répond alors en erreur 400).
+     * Les succès du joueur pour un jeu ; vide quand Steam n'en donne pas : jeu sans statistiques (400, 403)
+     * ou en panne de son côté (500 sur certains vieux jeux), pour qu'un seul jeu ne bloque pas la synchro.
      *
      * @return list<array{apiname: string, achieved: int, unlocktime: int}>
      */
@@ -67,18 +68,19 @@ final readonly class SteamClient
     {
         try {
             return $this->get('/ISteamUserStats/GetPlayerAchievements/v1/', ['steamid' => $steamId, 'appid' => $appId])['playerstats']['achievements'] ?? [];
-        } catch (HttpExceptionInterface $e) {
-            if (\in_array($e->getResponse()->getStatusCode(), [400, 403], true)) {
-                return [];
-            }
-            throw $e;
+        } catch (HttpExceptionInterface) {
+            return [];
         }
     }
 
-    /** @return array<string, float> la part des joueurs qui ont chaque succès, en %, par nom technique */
+    /** @return array<string, float> la part des joueurs qui ont chaque succès, en %, par nom technique ; vide pour un jeu sans succès (Steam répond 403) */
     public function globalPercentages(int $appId): array
     {
-        $rows = $this->get('/ISteamUserStats/GetGlobalAchievementPercentagesForApp/v2/', ['gameid' => $appId], withKey: false)['achievementpercentages']['achievements'] ?? [];
+        try {
+            $rows = $this->get('/ISteamUserStats/GetGlobalAchievementPercentagesForApp/v2/', ['gameid' => $appId], withKey: false)['achievementpercentages']['achievements'] ?? [];
+        } catch (HttpExceptionInterface) {
+            return [];
+        }
 
         return array_column(array_map(fn (array $r) => [$r['name'], (float) $r['percent']], $rows), 1, 0);
     }
