@@ -1,0 +1,407 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Mon compte · Ludex{% endblock %}
+
+{% block body %}
+    <header class="tete">
+        <h1 id="bonjour">Mon compte</h1>
+        <p id="sous-titre">Chargement…</p>
+    </header>
+
+    <main class="compte">
+        <nav class="onglets" role="tablist" aria-label="Mon compte">
+            <button role="tab" aria-selected="true" aria-controls="vue-bord" data-vue="bord">Tableau de bord</button>
+            <button role="tab" aria-selected="false" aria-controls="vue-collection" data-vue="collection">Ma collection</button>
+            <button role="tab" aria-selected="false" aria-controls="vue-envies" data-vue="envies">Liste d'envies</button>
+            <button role="tab" aria-selected="false" aria-controls="vue-steam" data-vue="steam">Steam</button>
+            <button role="tab" aria-selected="false" aria-controls="vue-reglages" data-vue="reglages">Paramètres</button>
+            <hr>
+            <button type="button" id="deconnexion">Se déconnecter</button>
+        </nav>
+
+        <div>
+            <p class="bandeau-demo" id="bandeau-demo" hidden>Vous êtes dans le compte de démo, partagé par tous les visiteurs. Modifiez la collection et les envies librement : tout revient à l'état d'origine chaque nuit à minuit. Le compte lui-même (pseudo, mot de passe, Steam) ne se modifie pas.</p>
+
+            <section class="vue" id="vue-bord" role="tabpanel">
+                <h2>Tableau de bord</h2>
+                <dl class="chiffres" id="chiffres">
+                    <div class="chiffre"><dt>Jeux</dt><dd>–</dd></div>
+                    <div class="chiffre"><dt>Temps de jeu</dt><dd>–</dd></div>
+                    <div class="chiffre"><dt>Succès</dt><dd>–</dd></div>
+                    <div class="chiffre"><dt>Platines</dt><dd>–</dd></div>
+                </dl>
+                <h2 style="margin-top: 24px">Récompenses</h2>
+                <div class="grille" id="recompenses-liste"></div>
+            </section>
+
+            <section class="vue" id="vue-collection" role="tabpanel" hidden>
+                <h2>Ma collection</h2>
+                <div class="panneau">
+                    <form class="ajout formulaire" id="ajout-collection">
+                        <label>Ajouter un jeu
+                            <input type="search" name="recherche" placeholder="Titre du jeu" autocomplete="off">
+                        </label>
+                        <label>Plateforme <select name="platform" required disabled><option value="">Choisir un jeu</option></select></label>
+                        <label>Statut
+                            <select name="status">
+                                <option value="backlog">À faire</option>
+                                <option value="playing">En cours</option>
+                                <option value="finished">Fini</option>
+                                <option value="abandoned">Abandonné</option>
+                            </select>
+                        </label>
+                        <button class="bouton bouton-vert" type="submit" disabled>Ajouter</button>
+                    </form>
+                    <div class="suggestions" id="suggestions-collection"></div>
+                    <p class="message" id="message-collection" role="status"></p>
+                </div>
+                <div class="rangee">
+                    <select class="saisie" id="filtre-statut" aria-label="Filtrer par statut">
+                        <option value="">Tous les statuts</option>
+                        <option value="playing">En cours</option>
+                        <option value="finished">Fini</option>
+                        <option value="backlog">À faire</option>
+                        <option value="abandoned">Abandonné</option>
+                    </select>
+                    <span class="regle" id="total-collection"></span>
+                </div>
+                <div class="entrees" id="collection"></div>
+                <div class="pagination" id="pagination"></div>
+            </section>
+
+            <section class="vue" id="vue-envies" role="tabpanel" hidden>
+                <h2>Liste d'envies</h2>
+                <div class="panneau">
+                    <form class="ajout formulaire" id="ajout-envie">
+                        <label>Ajouter une envie <input type="search" name="recherche" placeholder="Titre du jeu" autocomplete="off"></label>
+                        <label>Priorité
+                            <select name="priority"><option value="1">1 · très envie</option><option value="2" selected>2</option><option value="3">3 · un jour</option></select>
+                        </label>
+                        <label>Note <input type="text" name="note" maxlength="500" placeholder="Facultatif"></label>
+                        <button class="bouton bouton-vert" type="submit" disabled>Ajouter</button>
+                    </form>
+                    <div class="suggestions" id="suggestions-envies"></div>
+                    <p class="message" id="message-envies" role="status"></p>
+                </div>
+                <div class="entrees" id="envies"></div>
+            </section>
+
+            <section class="vue" id="vue-steam" role="tabpanel" hidden>
+                <h2>Steam</h2>
+                <p class="intro">Liez votre compte Steam pour importer vos jeux, votre temps de jeu et vos succès. Votre profil et ses « Détails des jeux » doivent être publics.</p>
+                <div class="panneau" id="steam"></div>
+            </section>
+
+            <section class="vue" id="vue-reglages" role="tabpanel" hidden>
+                <h2>Paramètres</h2>
+                <div class="panneau">
+                    <h2>Profil</h2>
+                    <form class="formulaire" id="form-profil">
+                        <label>Pseudo <input type="text" name="displayName" minlength="2" maxlength="40"></label>
+                        <label>E-mail <input type="email" name="email" required></label>
+                        <p class="message" role="status"></p>
+                        <button class="bouton bouton-plein" type="submit">Enregistrer</button>
+                    </form>
+                </div>
+                <div class="panneau">
+                    <h2>Mot de passe</h2>
+                    <form class="formulaire" id="form-mdp">
+                        <label>Mot de passe actuel <input type="password" name="currentPassword" autocomplete="current-password" required></label>
+                        <label>Nouveau mot de passe <input type="password" name="newPassword" autocomplete="new-password" minlength="8" required></label>
+                        <p class="message" role="status"></p>
+                        <button class="bouton bouton-plein" type="submit">Changer le mot de passe</button>
+                    </form>
+                </div>
+                <div class="panneau">
+                    <h2>Supprimer mon compte</h2>
+                    <p>Votre collection, vos envies, vos succès et vos récompenses sont supprimés avec lui. C'est définitif.</p>
+                    <form class="formulaire" id="form-suppression">
+                        <label>Mot de passe <input type="password" name="password" autocomplete="current-password" required></label>
+                        <p class="message" role="status"></p>
+                        <button class="bouton bouton-danger" type="submit">Supprimer définitivement</button>
+                    </form>
+                </div>
+            </section>
+        </div>
+    </main>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const { api, echappe, heures, jour, STATUTS, messageErreur } = Ludex;
+    let compte = null;
+    let page = 1;
+
+    const message = (el, texte, type = 'ok') => { el.className = `message message-${type}`; el.textContent = texte; };
+
+    // ---------- Onglets ----------
+    function ouvrir(vue) {
+        document.querySelectorAll('.onglets [role=tab]').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.vue === vue)));
+        document.querySelectorAll('.vue').forEach((v) => { v.hidden = v.id !== `vue-${vue}`; });
+        history.replaceState(null, '', `#${vue}`);
+        ({ bord: tableau, collection, envies, steam, reglages: () => {} })[vue]?.();
+    }
+    document.querySelectorAll('.onglets [role=tab]').forEach((b) => b.addEventListener('click', () => ouvrir(b.dataset.vue)));
+    document.getElementById('deconnexion').addEventListener('click', Ludex.deconnexion);
+
+    // ---------- Tableau de bord ----------
+    async function tableau() {
+        const [s, recompenses] = await Promise.all([api('/api/account/stats'), api('/api/account/rewards')]);
+        [s.games, heures(s.playtimeMinutes), s.achievements, s.platinums].forEach((v, i) => { document.querySelectorAll('#chiffres dd')[i].textContent = v; });
+        const liste = recompenses.member.sort((a, b) => b.unlocked - a.unlocked || b.progress / b.threshold - a.progress / a.threshold);
+        document.getElementById('recompenses-liste').innerHTML = liste.map((r) => `
+            <div class="recompense${r.unlocked ? ' obtenue' : ''}">
+                <span class="type">${echappe(r.cosmetic)}</span>
+                <h3>${echappe(r.name)}</h3>
+                <p>${echappe(r.description)}</p>
+                ${r.unlocked ? `<small>Débloquée le ${jour(r.unlockedAt)}</small>`
+                    : `<div class="progres" aria-hidden="true"><i style="width:${r.progress / r.threshold * 100}%"></i></div><small>${r.progress.toLocaleString('fr-FR')} / ${r.threshold.toLocaleString('fr-FR')}</small>`}
+            </div>`).join('');
+    }
+
+    // ---------- Recherche d'un jeu du catalogue ----------
+    function recherche(form, zone, quandChoisi) {
+        const champ = form.elements.recherche;
+        let delai;
+        champ.addEventListener('input', () => {
+            clearTimeout(delai);
+            form.querySelector('[type=submit]').disabled = true;
+            delai = setTimeout(async () => {
+                const titre = champ.value.trim();
+                if (titre.length < 2) { zone.innerHTML = ''; return; }
+                const jeux = (await api(`/api/games?title=${encodeURIComponent(titre)}&itemsPerPage=6`, { jeton: false })).member;
+                zone.innerHTML = jeux.length
+                    ? jeux.map((g, i) => `<button type="button" data-i="${i}">${echappe(g.title)} <small>${g.releaseYear ?? ''}</small></button>`).join('')
+                    : '<p class="regle">Aucun jeu de ce nom au catalogue.</p>';
+                zone.querySelectorAll('button').forEach((b) => b.addEventListener('click', () => {
+                    const jeu = jeux[b.dataset.i];
+                    champ.value = jeu.title;
+                    zone.innerHTML = '';
+                    form.querySelector('[type=submit]').disabled = false;
+                    quandChoisi(jeu);
+                }));
+            }, 250);
+        });
+    }
+
+    // ---------- Collection ----------
+    let jeuChoisi = null;
+    const formCollection = document.getElementById('ajout-collection');
+    recherche(formCollection, document.getElementById('suggestions-collection'), (jeu) => {
+        jeuChoisi = jeu;
+        const select = formCollection.elements.platform;
+        select.innerHTML = jeu.platforms.map((p) => `<option value="${echappe(p['@id'])}">${echappe(p.name)}</option>`).join('');
+        select.disabled = false;
+    });
+    formCollection.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const zone = document.getElementById('message-collection');
+        try {
+            await api('/api/collection_items', { methode: 'POST', corps: { game: jeuChoisi['@id'], platform: formCollection.elements.platform.value, status: formCollection.elements.status.value } });
+            message(zone, `${jeuChoisi.title} ajouté à la collection.`);
+            formCollection.reset();
+            formCollection.elements.platform.disabled = true;
+            formCollection.querySelector('[type=submit]').disabled = true;
+            page = 1;
+            collection();
+        } catch (err) {
+            message(zone, messageErreur(err), 'erreur');
+        }
+    });
+    document.getElementById('filtre-statut').addEventListener('change', () => { page = 1; collection(); });
+
+    async function collection() {
+        const statut = document.getElementById('filtre-statut').value;
+        const donnees = await api(`/api/collection_items?page=${page}${statut ? `&status=${statut}` : ''}`);
+        document.getElementById('total-collection').textContent = `${donnees.totalItems} jeu${donnees.totalItems > 1 ? 'x' : ''}`;
+        const notes = ['<option value="">–</option>', ...Array.from({ length: 11 }, (_, n) => `<option value="${n}">${n}/10</option>`)].join('');
+        document.getElementById('collection').innerHTML = donnees.member.length ? donnees.member.map((i) => `
+            <form class="ligne-jeu" data-iri="${echappe(i['@id'])}">
+                <div>
+                    <strong>${echappe(i.game.title)}</strong>
+                    <small>${echappe(i.platform.name)}${i.fromSteam ? ' · Steam' : ''}${i.achievementsTotal ? ` · succès ${i.achievementsUnlocked}/${i.achievementsTotal}${i.platinumAt ? ' · platine' : ''}` : ''}</small>
+                    ${i.achievementsTotal ? `<div class="succes-barre"><i style="width:${i.achievementsPercent}%"></i></div>` : ''}
+                </div>
+                <select name="status" aria-label="Statut">${Object.entries(STATUTS).map(([v, l]) => `<option value="${v}" ${v === i.status ? 'selected' : ''}>${l}</option>`).join('')}</select>
+                <input name="heures" type="number" min="0" step="0.5" value="${Math.round(i.playtimeMinutes / 30) / 2}" aria-label="Heures de jeu">
+                <select name="rating" aria-label="Note">${notes.replace(`value="${i.rating ?? ''}"`, `value="${i.rating ?? ''}" selected`)}</select>
+                <div class="boutons">
+                    <button class="bouton bouton-petit" type="submit">Enregistrer</button>
+                    <button class="bouton bouton-petit bouton-danger" type="button" data-supprimer>Retirer</button>
+                </div>
+            </form>`).join('') : '<p class="vide">Aucun jeu ici pour le moment.</p>';
+
+        const pages = Math.ceil(donnees.totalItems / 20);
+        document.getElementById('pagination').innerHTML = pages > 1
+            ? Array.from({ length: pages }, (_, n) => `<button class="bouton bouton-petit ${n + 1 === page ? 'bouton-plein' : ''}" data-page="${n + 1}">${n + 1}</button>`).join('') : '';
+    }
+    document.getElementById('pagination').addEventListener('click', (e) => {
+        if (e.target.dataset.page) { page = Number(e.target.dataset.page); collection(); }
+    });
+    document.getElementById('collection').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const f = e.target;
+        const bouton = f.querySelector('[type=submit]');
+        try {
+            await api(f.dataset.iri, { methode: 'PATCH', patch: true, corps: {
+                status: f.elements.status.value,
+                playtimeMinutes: Math.round(Number(f.elements.heures.value) * 60),
+                rating: f.elements.rating.value === '' ? null : Number(f.elements.rating.value),
+            } });
+            bouton.textContent = 'Enregistré';
+            setTimeout(() => { bouton.textContent = 'Enregistrer'; }, 1500);
+        } catch (err) {
+            message(document.getElementById('message-collection'), messageErreur(err), 'erreur');
+        }
+    });
+    document.getElementById('collection').addEventListener('click', async (e) => {
+        if (!e.target.matches('[data-supprimer]')) return;
+        await api(e.target.closest('form').dataset.iri, { methode: 'DELETE' });
+        collection();
+    });
+
+    // ---------- Liste d'envies ----------
+    let envieChoisie = null;
+    const formEnvie = document.getElementById('ajout-envie');
+    recherche(formEnvie, document.getElementById('suggestions-envies'), (jeu) => { envieChoisie = jeu; });
+    formEnvie.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const zone = document.getElementById('message-envies');
+        try {
+            await api('/api/wishlist_items', { methode: 'POST', corps: { game: envieChoisie['@id'], priority: Number(formEnvie.elements.priority.value), note: formEnvie.elements.note.value || null } });
+            message(zone, `${envieChoisie.title} ajouté aux envies.`);
+            formEnvie.reset();
+            formEnvie.querySelector('[type=submit]').disabled = true;
+            envies();
+        } catch (err) {
+            message(zone, messageErreur(err), 'erreur');
+        }
+    });
+
+    async function envies() {
+        const donnees = await api('/api/wishlist_items?itemsPerPage=100');
+        document.getElementById('envies').innerHTML = donnees.member.length ? donnees.member.map((w) => `
+            <div class="ligne-jeu" data-iri="${echappe(w['@id'])}" style="grid-template-columns: minmax(0, 1fr) 150px auto">
+                <div><strong>${echappe(w.game.title)}</strong><small>${w.note ? echappe(w.note) : `Ajouté le ${jour(w.addedAt)}`}</small></div>
+                <select name="priority" aria-label="Priorité">${[1, 2, 3].map((p) => `<option value="${p}" ${p === w.priority ? 'selected' : ''}>Priorité ${p}</option>`).join('')}</select>
+                <div class="boutons"><button class="bouton bouton-petit bouton-danger" type="button" data-supprimer>Retirer</button></div>
+            </div>`).join('') : '<p class="vide">Votre liste d\'envies est vide.</p>';
+    }
+    document.getElementById('envies').addEventListener('change', (e) => {
+        if (e.target.name === 'priority') api(e.target.closest('[data-iri]').dataset.iri, { methode: 'PATCH', patch: true, corps: { priority: Number(e.target.value) } });
+    });
+    document.getElementById('envies').addEventListener('click', async (e) => {
+        if (!e.target.matches('[data-supprimer]')) return;
+        await api(e.target.closest('[data-iri]').dataset.iri, { methode: 'DELETE' });
+        envies();
+    });
+
+    // ---------- Steam ----------
+    async function steam() {
+        const s = await api('/api/account/steam');
+        const zone = document.getElementById('steam');
+        if (!s.linked) {
+            zone.innerHTML = `
+                <h2>Aucun compte lié</h2>
+                <p>Le bouton vous envoie sur Steam : connectez-vous, Steam confirme votre compte à Ludex et vous ramène ici. Aucune autre donnée n'est partagée.</p>
+                <div class="rangee" style="margin-top: 18px"><button class="bouton bouton-vert" id="steam-lier" ${compte.demo ? 'disabled' : ''}>Se connecter via Steam</button></div>
+                <p class="message" role="status" style="margin-top: 14px"></p>`;
+            document.getElementById('steam-lier')?.addEventListener('click', async () => {
+                try {
+                    location.href = (await api('/api/account/steam/link', { methode: 'POST' })).linkUrl;
+                } catch (err) {
+                    message(zone.querySelector('.message'), messageErreur(err), 'erreur');
+                }
+            });
+            return;
+        }
+        const statuts = { ok: 'Synchronisée', en_attente: 'En cours…', profil_prive: 'Profil privé', details_prives: 'Détails des jeux masqués', erreur: 'Erreur' };
+        zone.innerHTML = `
+            <div class="steam-profil">
+                ${s.avatar ? `<img src="${echappe(s.avatar)}" alt="">` : ''}
+                <div><strong>${echappe(s.persona ?? 'Compte Steam')}</strong><br><small class="regle">SteamID ${echappe(s.steamId)}</small></div>
+            </div>
+            <p style="margin-top: 16px" class="regle">Dernière synchronisation : ${s.syncedAt ? `${jour(s.syncedAt)} · ${statuts[s.syncStatus] ?? s.syncStatus}` : 'jamais'}</p>
+            ${s.message ? `<p class="message message-info" style="margin-top: 12px">${echappe(s.message)}</p>` : ''}
+            <div class="rangee" style="margin-top: 18px">
+                <button class="bouton bouton-vert" id="steam-sync">Synchroniser</button>
+                <button class="bouton bouton-danger" id="steam-delier">Délier</button>
+            </div>
+            <p class="message" role="status" style="margin-top: 14px"></p>`;
+        document.getElementById('steam-sync').addEventListener('click', async () => {
+            try {
+                await api('/api/account/steam/sync', { methode: 'POST' });
+                message(zone.querySelector('.message:last-child'), 'Synchronisation lancée : vos jeux arrivent dans quelques minutes.');
+                setTimeout(steam, 5000);
+            } catch (err) {
+                message(zone.querySelector('.message:last-child'), messageErreur(err), 'erreur');
+            }
+        });
+        document.getElementById('steam-delier').addEventListener('click', async () => {
+            if (!confirm('Délier votre compte Steam ? Les jeux importés restent dans votre collection.')) return;
+            await api('/api/account/steam', { methode: 'DELETE' });
+            steam();
+        });
+    }
+
+    // ---------- Paramètres ----------
+    document.getElementById('form-profil').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const zone = e.target.querySelector('.message');
+        try {
+            const resultat = await api('/api/account', { methode: 'PATCH', patch: true, corps: { displayName: e.target.elements.displayName.value || null, email: e.target.elements.email.value } });
+            // L'e-mail a changé : l'API renvoie un nouveau jeton, l'ancien ne vaut plus
+            if (resultat.token) Ludex.garder(resultat.token);
+            compte = resultat;
+            entete();
+            message(zone, 'Profil enregistré.');
+        } catch (err) {
+            message(zone, messageErreur(err), 'erreur');
+        }
+    });
+    document.getElementById('form-mdp').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const zone = e.target.querySelector('.message');
+        try {
+            await api('/api/account/password', { methode: 'POST', corps: Object.fromEntries(new FormData(e.target)) });
+            e.target.reset();
+            message(zone, 'Mot de passe changé.');
+        } catch (err) {
+            message(zone, messageErreur(err), 'erreur');
+        }
+    });
+    document.getElementById('form-suppression').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        if (!confirm('Supprimer définitivement votre compte et toutes ses données ?')) return;
+        try {
+            await api('/api/account/delete', { methode: 'POST', corps: Object.fromEntries(new FormData(e.target)) });
+            Ludex.deconnexion();
+        } catch (err) {
+            message(e.target.querySelector('.message'), messageErreur(err), 'erreur');
+        }
+    });
+
+    function entete() {
+        document.getElementById('bonjour').textContent = `Bonjour ${compte.displayName ?? ''}`.trim();
+        document.getElementById('sous-titre').textContent = compte.demo
+            ? 'Compte de démo, remis à zéro chaque nuit à minuit.'
+            : `Membre depuis le ${jour(compte.createdAt)} · ${compte.email}`;
+        document.querySelector('#compte-lien span').textContent = compte.displayName || 'Mon compte';
+        const f = document.getElementById('form-profil');
+        f.elements.displayName.value = compte.displayName ?? '';
+        f.elements.email.value = compte.email;
+    }
+
+    (async () => {
+        compte = await Ludex.moi();
+        if (!compte) { location.replace('/connexion'); return; }
+        entete();
+        if (compte.demo) {
+            document.getElementById('bandeau-demo').hidden = false;
+            document.querySelectorAll('#vue-reglages button, #vue-reglages input').forEach((el) => { el.disabled = true; });
+        }
+        const vue = location.hash.slice(1);
+        ouvrir(['bord', 'collection', 'envies', 'steam', 'reglages'].includes(vue) ? vue : 'bord');
+    })();
+</script>
+{% endblock %}

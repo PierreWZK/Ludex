@@ -8,7 +8,7 @@ use App\Entity\User;
 use Symfony\Bundle\SecurityBundle\Security;
 
 /**
- * GET /api/me : le compte connecté.
+ * GET et PATCH /api/account : le compte connecté.
  *
  * @implements ProviderInterface<User>
  */

@@ -1,7 +1,7 @@
 {% set messages = {
-    lie: ['Compte Steam lié', "Votre compte Steam est maintenant relié à Ludex. Lancez la synchronisation avec POST /api/steam/sync : vos jeux, votre temps de jeu et vos succès arrivent dans votre collection en quelques minutes."],
-    expire: ['Lien expiré', "Ce lien de connexion n'est plus valable (10 minutes au plus). Redemandez-en un avec POST /api/steam/link."],
-    refuse: ['Connexion refusée', "Steam n'a pas confirmé cette connexion. Recommencez depuis POST /api/steam/link."],
+    lie: ['Compte Steam lié', "Votre compte Steam est maintenant relié à Ludex. Lancez la synchronisation depuis votre compte (ou POST /api/account/steam/sync) : vos jeux, votre temps de jeu et vos succès arrivent dans votre collection en quelques minutes."],
+    expire: ['Lien expiré', "Ce lien de connexion n'est plus valable (10 minutes au plus). Redemandez-en un avec POST /api/account/steam/link."],
+    refuse: ['Connexion refusée', "Steam n'a pas confirmé cette connexion. Recommencez depuis POST /api/account/steam/link."],
     deja_lie: ['Compte déjà lié', "Ce compte Steam est déjà relié à un autre compte Ludex. Un compte Steam ne se lie qu'une fois."],
 } %}
 {% set message = messages[outcome] %}
@@ -44,7 +44,7 @@
             <div><strong>{{ user.steamPersona }}</strong><br><small>SteamID {{ user.steamId }}</small></div>
         </div>
     {% endif %}
-    <a class="btn" href="/api/docs">Ouvrir la documentation</a>
+    <a class="btn" href="/compte#steam">Retour à mon compte</a>
 </main>
 </body>
 </html>

@@ -5,13 +5,14 @@ namespace App\State;
 use ApiPlatform\Metadata\Operation;
 use ApiPlatform\State\ProcessorInterface;
 use App\ApiResource\SteamAccount;
+use App\Demo\DemoGuard;
 use App\Entity\User;
 use App\Steam\SteamOpenId;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
 /**
- * POST /api/steam/link : l'adresse de connexion Steam, avec un jeton d'état qui désigne le compte à lier.
+ * POST /api/account/steam/link : l'adresse de connexion Steam, avec un jeton d'état qui désigne le compte à lier.
  *
  * @implements ProcessorInterface<null, SteamAccount>
  */
@@ -25,6 +26,7 @@ final readonly class SteamLinkProcessor implements ProcessorInterface
     {
         $user = $this->security->getUser();
         \assert($user instanceof User);
+        DemoGuard::deny($user, 'lier de compte Steam');
 
         $returnTo = $this->urls->generate('steam_callback', ['state' => $this->openId->createState($user->getId())], UrlGeneratorInterface::ABSOLUTE_URL);
 

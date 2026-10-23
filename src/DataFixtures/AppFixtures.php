@@ -2,25 +2,21 @@
 
 namespace App\DataFixtures;
 
-use App\Entity\CollectionItem;
+use App\Demo\DemoAccount;
 use App\Entity\Game;
 use App\Entity\Genre;
 use App\Entity\Platform;
-use App\Entity\User;
-use App\Entity\WishlistItem;
-use App\Enum\CollectionStatus;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Persistence\ObjectManager;
-use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
 /**
- * Le catalogue de démonstration (6 plateformes, 13 genres, 54 jeux) et le compte de démo,
- * avec une collection et une liste d'envies déjà remplies.
+ * Le catalogue de démonstration (6 plateformes, 13 genres, 54 jeux), puis le compte de démo
+ * avec sa collection et sa liste d'envies (voir DemoAccount).
  */
 final class AppFixtures extends Fixture
 {
-    public const DEMO_EMAIL = 'demo@ludex.fr';
-    public const DEMO_PASSWORD = 'ludex-demo';
+    public const DEMO_EMAIL = DemoAccount::EMAIL;
+    public const DEMO_PASSWORD = DemoAccount::PASSWORD;
 
     private const PLATFORMS = [
         'pc' => ['PC', 'Divers'],
@@ -95,38 +91,7 @@ final class AppFixtures extends Fixture
         ['Metroid Prime 4: Beyond', 2025, ['switch', 'switch-2'], ['action', 'aventure']],
     ];
 
-    // La collection du compte de démo : [titre, plateforme, statut, heures, note]
-    private const DEMO_COLLECTION = [
-        ['Elden Ring', 'ps5', CollectionStatus::Finished, 142, 10],
-        ["Baldur's Gate 3", 'pc', CollectionStatus::Finished, 118, 10],
-        ['Hades', 'switch', CollectionStatus::Finished, 64, 9],
-        ['Hades II', 'switch-2', CollectionStatus::Playing, 21, null],
-        ['The Legend of Zelda: Tears of the Kingdom', 'switch', CollectionStatus::Finished, 96, 9],
-        ['Hollow Knight', 'switch', CollectionStatus::Abandoned, 17, 7],
-        ['Celeste', 'pc', CollectionStatus::Finished, 12, 9],
-        ['Stardew Valley', 'pc', CollectionStatus::Playing, 55, 8],
-        ['Cyberpunk 2077', 'pc', CollectionStatus::Finished, 73, 8],
-        ['Mario Kart World', 'switch-2', CollectionStatus::Playing, 14, 8],
-        ['Astro Bot', 'ps5', CollectionStatus::Finished, 15, 9],
-        ['Final Fantasy VII Rebirth', 'ps5', CollectionStatus::Backlog, 0, null],
-        ['Clair Obscur: Expedition 33', 'ps5', CollectionStatus::Playing, 31, null],
-        ['Balatro', 'pc', CollectionStatus::Playing, 48, 9],
-        ['Outer Wilds', 'pc', CollectionStatus::Backlog, 0, null],
-        ['Disco Elysium', 'pc', CollectionStatus::Backlog, 2, null],
-        ['Street Fighter 6', 'ps5', CollectionStatus::Abandoned, 9, 6],
-        ['Forza Horizon 5', 'xbox', CollectionStatus::Finished, 40, 8],
-    ];
-
-    // [titre, priorité 1 à 3, note]
-    private const DEMO_WISHLIST = [
-        ['Metroid Prime 4: Beyond', 1, 'Dès sa sortie en version Switch 2'],
-        ['Kingdom Come: Deliverance II', 2, null],
-        ['Split Fiction', 1, 'À faire à deux'],
-        ['Ghost of Tsushima', 3, 'Attendre une promotion'],
-        ['Slay the Spire', 2, null],
-    ];
-
-    public function __construct(private readonly UserPasswordHasherInterface $hasher)
+    public function __construct(private readonly DemoAccount $demo)
     {
     }
 
@@ -142,7 +107,6 @@ final class AppFixtures extends Fixture
             $manager->persist($genres[$slug] = new Genre($name, $slug));
         }
 
-        $games = [];
         foreach (self::GAMES as [$title, $year, $platformSlugs, $genreSlugs]) {
             $game = new Game($title, $year);
             foreach ($platformSlugs as $slug) {
@@ -151,32 +115,11 @@ final class AppFixtures extends Fixture
             foreach ($genreSlugs as $slug) {
                 $game->addGenre($genres[$slug]);
             }
-            $manager->persist($games[$title] = $game);
-        }
-
-        $demo = (new User())->setEmail(self::DEMO_EMAIL);
-        $demo->setPassword($this->hasher->hashPassword($demo, self::DEMO_PASSWORD));
-        $manager->persist($demo);
-
-        foreach (self::DEMO_COLLECTION as $i => [$title, $platform, $status, $hours, $rating]) {
-            $item = (new CollectionItem())
-                ->setOwner($demo)
-                ->setGame($games[$title])
-                ->setPlatform($platforms[$platform])
-                ->setStatus($status)
-                ->setPlaytimeMinutes($hours * 60)
-                ->setRating($rating)
-                ->setAddedAt(new \DateTimeImmutable(sprintf('-%d days', 150 - $i * 8)));
-            if (CollectionStatus::Finished === $status) {
-                $item->setFinishedAt(new \DateTimeImmutable(sprintf('-%d days', 144 - $i * 8)));
-            }
-            $manager->persist($item);
-        }
-
-        foreach (self::DEMO_WISHLIST as [$title, $priority, $note]) {
-            $manager->persist((new WishlistItem())->setOwner($demo)->setGame($games[$title])->setPriority($priority)->setNote($note));
+            $manager->persist($game);
         }
 
         $manager->flush();
+
+        $this->demo->reset();
     }
 }

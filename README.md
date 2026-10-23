@@ -1,6 +1,6 @@
 # Ludex · L'index de votre ludothèque, en API
 
-> Jour 11 du défi **30 jours, 30 projets** · Symfony · API Platform · MySQL · ✅ **V1 en ligne** · 🚧 **V2 Steam codée**
+> Jour 11 du défi **30 jours, 30 projets** · Symfony · API Platform · MySQL · ✅ **V1 et V2 en ligne** · 🚧 **Comptes et jeu du jour**
 
 Une **API REST** pour gérer sa collection de jeux vidéo : plateformes, état, temps de jeu, note, liste d'envies. **Ludex** est documentée (OpenAPI), sécurisée par jeton, et livrée avec une page de démo qui l'appelle en direct. Elle se branche sur Steam pour importer jeux, temps de jeu et succès, suivre les succès qui restent, décrocher des platines et débloquer des récompenses.
 
@@ -23,7 +23,7 @@ Une **API REST** pour gérer sa collection de jeux vidéo : plateformes, état, 
 - Documentation interactive : Swagger sur `/api/docs`.
 - Page de démo sur `/`, branchée sur le compte de démo.
 
-### V2 · Steam (🚧 codée, à activer avec une clé Steam)
+### V2 · Steam (✅ en ligne, à activer avec une clé Steam)
 
 - **« Se connecter via Steam »** (OpenID) : Steam prouve le compte, sans partage de données à accepter. Un compte Steam ne se lie qu'à un compte Ludex.
 - **Synchronisation** en tâche de fond (Symfony Messenger), une fois par heure au plus : jeux et temps de jeu dans la collection (plateforme PC), succès obtenus et rareté de chaque succès.
@@ -33,6 +33,13 @@ Une **API REST** pour gérer sa collection de jeux vidéo : plateformes, état, 
 - **Récompenses** : 12 badges, cadres et titres débloqués par paliers (jeux, heures, succès, platines, succès rares).
 - Profil privé ou « Détails des jeux » masqués : la réponse dit exactement quel réglage changer.
 
+### Comptes et jeu du jour (🚧 en cours)
+
+- **Un compte, sur le site comme dans l'API** : inscription, connexion, pseudo, e-mail, mot de passe, suppression, tout passe par `/api/account`. Le site (`/connexion`, `/compte`) n'est qu'un client de l'API.
+- **Espace compte** : tableau de bord et récompenses, collection (ajout depuis le catalogue, statut, temps de jeu, note), liste d'envies, liaison et synchronisation Steam, paramètres.
+- **Compte de démo** partagé : sa collection et ses envies se modifient librement et reviennent à leur état d'origine **chaque nuit à minuit** (heure de Paris, Symfony Scheduler). Le compte lui-même (pseudo, e-mail, mot de passe, Steam) ne se modifie pas.
+- **Jeu du jour** (`/jeu`) : retrouver le jeu mystère en 6 essais. Chaque essai compare l'année (plus récent, plus ancien, à 3 ans près), les genres et les plateformes ; un indice s'ajoute au troisième essai. Le même pour tout le monde, nouveau à minuit, série gardée dans le navigateur, résultat à partager (copié sur ordinateur, partage natif sur téléphone). Il se joue aussi par l'API.
+
 ### V3 · autres plateformes (à étudier)
 
 Xbox, PlayStation, RetroAchievements… seulement celles dont les données se récupèrent de façon fiable et autorisée.
@@ -41,9 +48,12 @@ Xbox, PlayStation, RetroAchievements… seulement celles dont les données se r�
 
 | Méthode | Route | Accès |
 | --- | --- | --- |
-| `POST` | `/api/register` | libre (5 inscriptions par heure et par IP) |
-| `POST` | `/api/auth` | libre (5 essais par minute) : renvoie `{"token"}` |
-| `GET` | `/api/me`, `/api/stats`, `/api/rewards` | jeton |
+| `POST` | `/api/account` | libre : créer un compte (5 inscriptions par heure et par IP) |
+| `POST` | `/api/auth` | libre (5 essais par minute) : renvoie `{"token"}`, valable 24 h |
+| `GET` `PATCH` | `/api/account` | jeton : mon compte ; pseudo et e-mail (nouveau jeton renvoyé si l'e-mail change) |
+| `POST` | `/api/account/password`, `/api/account/delete` | jeton : changer de mot de passe, supprimer le compte (mot de passe demandé) |
+| `GET` | `/api/account/stats`, `/api/account/rewards` | jeton |
+| `GET` `POST` | `/api/daily`, `/api/daily/guess` | libre : le jeu du jour |
 | `GET` | `/api/games?title=&platform=&genre=&order[title]=`, `/api/platforms`, `/api/genres` | libre |
 | `POST` `PATCH` `DELETE` | `/api/games`, `/api/platforms` | administrateur |
 | `GET` `POST` | `/api/collection_items?status=&platform=&genre=&title=&exists[platinumAt]=true&order[playtimeMinutes]=desc` | jeton |
@@ -51,11 +61,11 @@ Xbox, PlayStation, RetroAchievements… seulement celles dont les données se r�
 | `GET` | `/api/collection_items/{id}/achievements?state=todo` | jeton, propriétaire |
 | `GET` `POST` | `/api/wishlist_items?priority=&order[addedAt]=` | jeton |
 | `GET` `PATCH` `DELETE` | `/api/wishlist_items/{id}` | jeton, propriétaire |
-| `GET` `DELETE` | `/api/steam` | jeton : état de la liaison, ou déliaison |
-| `POST` | `/api/steam/link` | jeton : renvoie l'adresse « Se connecter via Steam » |
-| `POST` | `/api/steam/sync` | jeton : synchronisation (une par heure) |
+| `GET` `DELETE` | `/api/account/steam` | jeton : état de la liaison, ou déliaison |
+| `POST` | `/api/account/steam/link` | jeton : renvoie l'adresse « Se connecter via Steam » |
+| `POST` | `/api/account/steam/sync` | jeton : synchronisation (une par heure) |
 
-Compte de démo : `demo@ludex.fr` / `ludex-demo`.
+Compte de démo : `demo@ludex.fr` / `ludex-demo` (remis à zéro chaque nuit à minuit).
 
 ```bash
 curl -s -X POST http://127.0.0.1:8000/api/auth -H 'Content-Type: application/json' \
@@ -66,8 +76,8 @@ curl -s 'http://127.0.0.1:8000/api/collection_items?status=finished&platform=ps5
 ### Lier son compte Steam
 
 1. Rendre public son profil Steam **et** ses « Détails des jeux » (Steam > Profil > Modifier le profil > Confidentialité).
-2. `POST /api/steam/link`, puis ouvrir `linkUrl` dans un navigateur et se connecter chez Steam : Ludex affiche « Compte Steam lié ».
-3. `POST /api/steam/sync`, puis suivre `GET /api/steam` jusqu'à `"syncStatus": "ok"`.
+2. Sur le site : **Mon compte > Steam > Se connecter via Steam**. Par l'API : `POST /api/account/steam/link`, puis ouvrir `linkUrl` dans un navigateur et se connecter chez Steam.
+3. **Synchroniser** (ou `POST /api/account/steam/sync`), puis suivre `GET /api/account/steam` jusqu'à `"syncStatus": "ok"`.
 
 ## Lancer en local
 
@@ -83,7 +93,8 @@ php bin/console doctrine:database:create --if-not-exists
 php bin/console doctrine:migrations:migrate      # MySQL ; avec SQLite : doctrine:schema:create
 php bin/console doctrine:fixtures:load
 symfony serve -d                                 # http://127.0.0.1:8000, Swagger sur /api/docs
-php bin/console messenger:consume async -vv      # le worker des synchronisations Steam
+php bin/console messenger:consume async scheduler_default -vv   # synchros Steam et remise à zéro de la démo
+php bin/console app:demo:reset                   # remettre la démo à zéro à la main
 ```
 
 Sous Windows, si la génération des clés échoue (`error:80000003`), indiquez à OpenSSL son fichier de configuration :
@@ -95,9 +106,11 @@ Sous Windows, si la génération des clés échoue (`error:80000003`), indiquez 
 php bin/phpunit
 ```
 
-21 tests fonctionnels (ApiTestCase) sur une base SQLite recréée à chaque test :
+33 tests fonctionnels (ApiTestCase) sur une base SQLite recréée à chaque test :
 
 - **API** : catalogue public, jeton obligatoire, isolation des collections, filtres combinés, validation et Problem Details, doublons, statistiques, inscription, droits d'administration.
+- **Compte** : inscription, pseudo, e-mail (nouveau jeton), mot de passe (actuel demandé), suppression avec ses données, compte de démo protégé et remis à zéro.
+- **Jeu du jour** : même jeu mystère pour tout le monde, essai comparé sans révéler la réponse, indice au troisième essai, réponse au sixième, jeu inconnu refusé.
 - **Steam**, contre un faux Steam (`tests/Steam/FakeSteam.php`, aucun appel réel) : liaison OpenID, jeton d'état falsifié, compte déjà lié, synchronisation complète (jeux, succès à faire, platine, récompenses), limite d'une synchro par heure, profil privé, détails des jeux masqués, succès d'un autre joueur.
 
 ## Mise en ligne
@@ -113,8 +126,8 @@ Variables d'environnement :
 | `JWT_PASSPHRASE` | une phrase secrète, qui chiffre les clés de signature |
 | `STEAM_API_KEY` | la clé de la Steam Web API ; sans elle, la synchronisation répond 503 |
 
-Au démarrage, le conteneur attend MySQL, joue les migrations, charge le catalogue et le compte de démo si la base est vide, crée les clés JWT s'il n'en a pas, puis lance le worker des synchronisations Steam à côté du serveur web.
+Au démarrage, le conteneur attend MySQL, joue les migrations, charge le catalogue et le compte de démo si la base est vide, crée les clés JWT s'il n'en a pas, puis lance le worker à côté du serveur web : synchronisations Steam et remise à zéro du compte de démo chaque nuit à minuit.
 
 ## Stack
 
-Symfony 8.1 · API Platform 5 · Doctrine ORM · Symfony Messenger · MySQL 8.4 · lexik/jwt-authentication-bundle · Steam Web API et OpenID · FrankenPHP.
+Symfony 8.1 · API Platform 5 · Doctrine ORM · Symfony Messenger et Scheduler · MySQL 8.4 · lexik/jwt-authentication-bundle · Steam Web API et OpenID · FrankenPHP.

@@ -2,10 +2,18 @@
 
 namespace App\Entity;
 
+use ApiPlatform\Metadata\ApiProperty;
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\Patch;
 use ApiPlatform\Metadata\Post;
+use App\Demo\DemoAccount;
+use App\Dto\AccountDeletion;
+use App\Dto\PasswordChange;
+use App\State\AccountDeletionProcessor;
+use App\State\AccountUpdateProcessor;
 use App\State\MeProvider;
+use App\State\PasswordChangeProcessor;
 use App\State\RegistrationProcessor;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
@@ -14,14 +22,25 @@ use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
 
-/** Un joueur : un e-mail, un mot de passe, sa collection et sa liste d'envies */
+/**
+ * Un joueur : son compte, sa collection et sa liste d'envies.
+ * Tout ce qui touche au compte passe par /api/account, depuis le site comme depuis l'API.
+ */
 #[ORM\Entity]
 #[ORM\Table(name: '`user`')]
 #[UniqueEntity('email', message: 'Un compte existe déjà avec cet e-mail.')]
 #[ApiResource(
+    shortName: 'Account',
     operations: [
-        new Post(uriTemplate: '/register', processor: RegistrationProcessor::class, denormalizationContext: ['groups' => ['user:register']]),
-        new Get(uriTemplate: '/me', provider: MeProvider::class, security: "is_granted('ROLE_USER')"),
+        new Post(uriTemplate: '/account', processor: RegistrationProcessor::class, description: 'Créer un compte',
+            denormalizationContext: ['groups' => ['user:register']], validationContext: ['groups' => ['Default', 'register']]),
+        new Get(uriTemplate: '/account', provider: MeProvider::class, security: "is_granted('ROLE_USER')", description: 'Mon compte'),
+        new Patch(uriTemplate: '/account', read: true, provider: MeProvider::class, processor: AccountUpdateProcessor::class, security: "is_granted('ROLE_USER')",
+            denormalizationContext: ['groups' => ['account:update']], description: "Changer de pseudo ou d'e-mail (un nouveau jeton est renvoyé si l'e-mail change)"),
+        new Post(uriTemplate: '/account/password', input: PasswordChange::class, output: false, status: 204, processor: PasswordChangeProcessor::class,
+            security: "is_granted('ROLE_USER')", description: 'Changer de mot de passe (le mot de passe actuel est demandé)'),
+        new Post(uriTemplate: '/account/delete', input: AccountDeletion::class, output: false, status: 204, processor: AccountDeletionProcessor::class,
+            security: "is_granted('ROLE_USER')", description: 'Supprimer son compte et toutes ses données (le mot de passe est demandé)'),
     ],
     normalizationContext: ['groups' => ['user:read']],
 )]
@@ -33,8 +52,14 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     #[ORM\Column(length: 180, unique: true)]
     #[Assert\NotBlank, Assert\Email, Assert\Length(max: 180)]
-    #[Groups(['user:read', 'user:register'])]
+    #[Groups(['user:read', 'user:register', 'account:update'])]
     private string $email = '';
+
+    /** Le nom affiché sur le site ; l'e-mail n'est jamais montré aux autres */
+    #[ORM\Column(length: 40, nullable: true)]
+    #[Assert\Length(min: 2, max: 40)]
+    #[Groups(['user:read', 'user:register', 'account:update'])]
+    private ?string $displayName = null;
 
     /** @var list<string> */
     #[ORM\Column]
@@ -44,9 +69,18 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private string $password = '';
 
     /** Le mot de passe en clair, le temps de l'inscription : jamais stocké ni renvoyé */
-    #[Assert\NotBlank, Assert\Length(min: 8, max: 4096)]
+    #[Assert\NotBlank(groups: ['register']), Assert\Length(min: 8, max: 4096, groups: ['register'])]
     #[Groups(['user:register'])]
     private ?string $plainPassword = null;
+
+    #[ORM\Column(options: ['default' => 'CURRENT_TIMESTAMP'])]
+    #[Groups(['user:read'])]
+    private \DateTimeImmutable $createdAt;
+
+    /** Renvoyé une seule fois, après un changement d'e-mail : l'ancien jeton portait l'ancien e-mail */
+    #[ApiProperty(readable: true, writable: false)]
+    #[Groups(['user:read'])]
+    private ?string $token = null;
 
     /** SteamID64 prouvé par OpenID : un compte Steam ne se lie qu'à un seul compte Ludex */
     #[ORM\Column(length: 20, unique: true, nullable: true)]
@@ -65,7 +99,29 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(length: 20, nullable: true)]
     private ?string $steamSyncStatus = null;
 
+    public function __construct()
+    {
+        $this->createdAt = new \DateTimeImmutable();
+    }
+
     public function getId(): ?int { return $this->id; }
+    public function getDisplayName(): ?string { return $this->displayName; }
+    public function setDisplayName(?string $displayName): static { $this->displayName = null === $displayName ? null : (trim($displayName) ?: null); return $this; }
+    public function getCreatedAt(): \DateTimeImmutable { return $this->createdAt; }
+    public function getToken(): ?string { return $this->token; }
+    public function setToken(?string $token): static { $this->token = $token; return $this; }
+
+    /** Le compte de démo, partagé par tous les visiteurs : réinitialisé chaque nuit, son compte ne se modifie pas */
+    #[Groups(['user:read'])]
+    public function isDemo(): bool { return DemoAccount::EMAIL === $this->email; }
+
+    /** Le compte Steam lié, résumé pour le site */
+    #[Groups(['user:read'])]
+    public function getSteam(): ?array
+    {
+        return $this->steamId ? ['steamId' => $this->steamId, 'persona' => $this->steamPersona, 'avatar' => $this->steamAvatar] : null;
+    }
+
     public function getEmail(): string { return $this->email; }
     public function setEmail(string $email): static { $this->email = mb_strtolower(trim($email)); return $this; }
     public function getUserIdentifier(): string { return $this->email; }

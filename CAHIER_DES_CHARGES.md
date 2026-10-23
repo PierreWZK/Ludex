@@ -15,8 +15,9 @@ Ensuite, Ludex se branche sur les comptes de jeu : Steam d'abord (jeux joués, t
 
 | Version | Contenu | État |
 | --- | --- | --- |
-| **V1** | L'API de collection : jeux, plateformes, collection, liste d'envies, statistiques, JWT, Swagger, démo | 🚧 En cours |
+| **V1** | L'API de collection : jeux, plateformes, collection, liste d'envies, statistiques, JWT, Swagger, démo | ✅ En ligne |
 | **V2** | Steam : connexion du compte, synchronisation, succès à faire, platines, récompenses | 🚧 Codée, en attente de la clé Steam |
+| **Comptes** | Compte sur le site et dans l'API (`/api/account`), démo remise à zéro à minuit, jeu du jour | 🚧 Codé |
 | **V3** | Autres plateformes : étude puis connexion de celles qui le permettent | À étudier |
 
 ---
@@ -132,6 +133,34 @@ Une clé d'API gratuite, liée au compte Steam du projet, gardée côté serveur
 - [x] Un profil privé ou aux détails masqués renvoie un message qui dit quoi changer.
 - [x] La liste des succès à faire et le pourcentage par jeu sont justes (testé avec des réponses Steam enregistrées).
 - [x] Une platine et une récompense se débloquent au bon moment (testé).
+
+---
+
+## 4 bis. Comptes et jeu du jour
+
+### Comptes
+
+- Un seul compte pour le site et l'API : tout ce qui touche au compte passe par `/api/account` (création, lecture, pseudo et e-mail, mot de passe, suppression), les données personnelles sous `/api/account/…` (statistiques, récompenses, Steam). Le site (`/connexion`, `/compte`) n'est qu'un client de l'API, avec le jeton gardé dans le navigateur (24 h).
+- Changer d'e-mail renvoie un nouveau jeton (l'ancien portait l'ancien e-mail). Changer de mot de passe ou supprimer son compte demande le mot de passe actuel. La suppression emporte collection, envies, succès et récompenses ; les jeux importés restent au catalogue.
+
+### Compte de démo
+
+- Partagé par tous les visiteurs, pour essayer sans s'inscrire : collection et envies se modifient librement.
+- Remis à son état d'origine chaque nuit à minuit, heure de Paris (Symfony Scheduler, exécuté par le worker du conteneur ; à la main : `app:demo:reset`).
+- Le compte lui-même ne se modifie pas : pseudo, e-mail, mot de passe, suppression et liaison Steam renvoient 403.
+
+### Jeu du jour
+
+- Retrouver le jeu mystère en 6 essais, parmi les jeux du catalogue qui ont une année et un genre. Le même pour tout le monde, nouveau à minuit (Paris), sans le même jeu deux fois en 30 jours.
+- Chaque essai compare l'année (identique, plus récent, plus ancien, écart), les genres et les plateformes en commun. À partir du troisième essai, un indice : l'initiale et le nombre de mots du titre. La réponse est révélée une fois trouvée ou au sixième essai.
+- Résultat à partager sans dévoiler les titres (une ligne de carrés par essai), copié sur ordinateur, partage natif sur téléphone. Parties, victoires, série et record gardés dans le navigateur.
+- Jouable aussi par l'API : `GET /api/daily`, `POST /api/daily/guess`.
+
+### Critères de réussite
+
+- [x] Inscription, profil, mot de passe et suppression fonctionnent par l'API et par le site (testé).
+- [x] Le compte de démo ne se modifie pas, et sa collection revient après la remise à zéro (testé).
+- [x] Le jeu du jour est stable dans la journée, ne révèle la réponse qu'à la fin et donne l'indice au troisième essai (testé).
 
 ---
 
