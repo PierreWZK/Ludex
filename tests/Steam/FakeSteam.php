@@ -7,7 +7,7 @@ use Symfony\Component\HttpClient\Response\MockResponse;
 /**
  * Un faux Steam pour les tests : réponses au format de la Steam Web API et de l'OpenID de Steam.
  *
- * Trois joueurs : …001 public (Celeste, 2 succès sur 3 ; Hades, tout obtenu), …002 au profil privé,
+ * Trois joueurs : …001 public (Celeste, 2 succès sur 3 ; un jeu hors catalogue, tout obtenu), …002 au profil privé,
  * …003 au profil public mais aux détails des jeux masqués.
  */
 final class FakeSteam
@@ -45,7 +45,7 @@ final class FakeSteam
             str_contains($path, 'GetOwnedGames') => self::PUBLIC === $query['steamid']
                 ? ['response' => ['game_count' => 4, 'games' => [
                     ['appid' => self::CELESTE, 'name' => 'Celeste', 'playtime_forever' => 600],
-                    ['appid' => self::HADES, 'name' => 'Hades', 'playtime_forever' => 3840],
+                    ['appid' => self::HADES, 'name' => 'Un jeu hors catalogue', 'playtime_forever' => 3840],
                     ['appid' => self::NO_STATS, 'name' => 'Un jeu sans succès', 'playtime_forever' => 30],
                     ['appid' => 999, 'name' => 'Un jeu jamais lancé', 'playtime_forever' => 0],
                 ]]]

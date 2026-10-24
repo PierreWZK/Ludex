@@ -82,10 +82,10 @@ final class SteamTest extends LudexTestCase
         self::assertResponseStatusCodeSame(202);
         self::assertJsonContains(['syncStatus' => 'ok']);
 
-        // Les jeux du catalogue sont retrouvés par leur titre, pas recréés
+        // Les jeux du catalogue sont retrouvés par leur titre, pas recréés ; les autres y sont ajoutés avec leurs succès
         self::assertSame(1, $this->em->getRepository(Game::class)->count(['title' => 'Celeste']));
         $items = $bob->request('GET', '/api/collection_items?order[playtimeMinutes]=desc')->toArray()['member'];
-        self::assertSame(['Hades', 'Celeste', 'Un jeu sans succès', 'Un jeu jamais lancé'], array_column(array_column($items, 'game'), 'title'));
+        self::assertSame(['Un jeu hors catalogue', 'Celeste', 'Un jeu sans succès', 'Un jeu jamais lancé'], array_column(array_column($items, 'game'), 'title'));
         self::assertSame([3840, 600, 30, 0], array_column($items, 'playtimeMinutes'));
         self::assertSame([100, 66.7], [$items[0]['achievementsPercent'], $items[1]['achievementsPercent']]);
 
@@ -96,9 +96,9 @@ final class SteamTest extends LudexTestCase
         $done = $bob->request('GET', "$celeste/achievements?state=done")->toArray()['member'];
         self::assertSame(['Cœur de cristal', 'Premier sommet'], array_column($done, 'name'), 'les plus récents d\'abord');
 
-        // Platine : Hades, daté de son dernier succès
+        // Platine : Un jeu hors catalogue, daté de son dernier succès
         $platinums = $bob->request('GET', '/api/collection_items?exists[platinumAt]=true')->toArray()['member'];
-        self::assertSame(['Hades'], array_column(array_column($platinums, 'game'), 'title'));
+        self::assertSame(['Un jeu hors catalogue'], array_column(array_column($platinums, 'game'), 'title'));
         self::assertStringStartsWith('2024-10-27', $platinums[0]['platinumAt']);
 
         $bob->request('GET', '/api/account/stats');
