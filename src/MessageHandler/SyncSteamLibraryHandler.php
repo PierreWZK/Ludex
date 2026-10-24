@@ -27,7 +27,8 @@ final readonly class SyncSteamLibraryHandler
             $this->sync->sync($user);
         } catch (\Throwable $e) {
             // Steam indisponible ou réponse inattendue : le joueur voit « erreur » et peut relancer plus tard
-            $this->logger->error('Synchronisation Steam impossible', ['user' => $message->userId, 'exception' => $e]);
+            // {error} dans le message : sans Monolog, le logger par défaut n'écrit pas l'exception du contexte
+            $this->logger->error('Synchronisation Steam impossible : {error}', ['user' => $message->userId, 'error' => $e::class.' : '.$e->getMessage(), 'exception' => $e]);
             if ($this->em->isOpen()) {
                 $user->setSteamSyncStatus(SteamSync::ERROR)->setSteamSyncedAt(new \DateTimeImmutable());
                 $this->em->flush();

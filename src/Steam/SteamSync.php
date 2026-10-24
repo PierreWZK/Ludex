@@ -109,8 +109,10 @@ final readonly class SteamSync
 
     private function achievements(User $user, Game $game, CollectionItem $item, string $steamId): void
     {
+        // Un jeu tout juste ajouté au catalogue n'est pas encore en base : ni succès connus, ni succès obtenus à relire
+        $saved = null !== $game->getId();
         $known = [];
-        foreach ($this->em->getRepository(Achievement::class)->findBy(['game' => $game]) as $achievement) {
+        foreach ($saved ? $this->em->getRepository(Achievement::class)->findBy(['game' => $game]) : [] as $achievement) {
             $known[$achievement->getApiName()] = $achievement;
         }
 
@@ -129,7 +131,7 @@ final readonly class SteamSync
         }
 
         $owned = [];
-        foreach ($this->em->createQueryBuilder()
+        foreach (!$saved ? [] : $this->em->createQueryBuilder()
             ->select('p')->from(PlayerAchievement::class, 'p')->join('p.achievement', 'a')
             ->where('p.owner = :user')->andWhere('a.game = :game')
             ->setParameter('user', $user)->setParameter('game', $game)
