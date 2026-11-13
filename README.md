@@ -1,6 +1,13 @@
 # Ludex · L'index de votre ludothèque, en API
 
-> Jour 11 du défi **30 jours, 30 projets** · Symfony · API Platform · MySQL · ✅ **V1 et V2 en ligne** · 🚧 **Comptes et jeu du jour**
+🌐 **[ludex.projectp.fr](https://ludex.projectp.fr/)** · Jour 11 du défi **[30 jours, 30 projets](https://projectp.fr/)** · [Dépôt du défi](https://github.com/PierreWZK/30DaysProjects)
+
+Stack : Symfony, API Platform, MySQL · ✅ V1 et V2 en ligne · 🚧 Comptes et jeu du jour.
+
+<p align="center">
+  <img src="docs/preview-accueil.png" alt="Page de démo de Ludex" width="72%">
+  <img src="docs/preview-mobile.png" alt="Ludex sur téléphone" width="25%">
+</p>
 
 Une **API REST** pour gérer sa collection de jeux vidéo : plateformes, état, temps de jeu, note, liste d'envies. **Ludex** est documentée (OpenAPI), sécurisée par jeton, et livrée avec une page de démo qui l'appelle en direct. Elle se branche sur Steam pour importer jeux, temps de jeu et succès, suivre les succès qui restent, décrocher des platines et débloquer des récompenses.
 
@@ -131,3 +138,14 @@ Au démarrage, le conteneur attend MySQL, joue les migrations, charge le catalog
 ## Stack
 
 Symfony 8.1 · API Platform 5 · Doctrine ORM · Symfony Messenger et Scheduler · MySQL 8.4 · lexik/jwt-authentication-bundle · Steam Web API et OpenID · FrankenPHP.
+
+---
+
+## Le défi 30 jours, 30 projets
+
+Un projet complet par jour pendant 30 jours, chacun en ligne sur son propre sous-domaine.
+
+- 🗂️ **Tous les projets** : [projectp.fr](https://projectp.fr/)
+- 💻 **Le dépôt du défi** : [github.com/PierreWZK/30DaysProjects](https://github.com/PierreWZK/30DaysProjects)
+- ⬅️ **Jour précédent** : [Tirage, pot odds et outs](https://tirage.projectp.fr/)
+- ➡️ **Jour suivant** : [Plume, compresseur d'images](https://plume.projectp.fr/)
